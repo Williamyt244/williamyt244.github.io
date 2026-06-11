@@ -1,0 +1,39 @@
+{
+  "portfolios": [
+    {
+      "id": 1,
+      "titulo": "Logo para Servidor SkyBlock",
+      "categoria": "logo",
+      "descricao": "Logo profissional criada para servidor de SkyBlock",
+      "imagem": "https://via.placeholder.com/600x400/7c3aed/ffffff?text=Exemplo+Logo",
+      "destaque": true
+    },
+    {
+      "id": 2,
+      "titulo": "Thumbnail para YouTube",
+      "categoria": "thumbnail",
+      "descricao": "Thumbnail chamativa para canal de Minecraft",
+      "imagem": "https://via.placeholder.com/600x400/1d4ed8/ffffff?text=Exemplo+Thumbnail",
+      "destaque": false
+    },
+    {
+      "id": 3,
+      "titulo": "Banner para Discord",
+      "categoria": "banner",
+      "descricao": "Banner moderno para servidor Discord de Minecraft",
+      "imagem": "https://via.placeholder.com/600x400/065f46/ffffff?text=Exemplo+Banner",
+      "destaque": true
+    }
+  ],
+  "config": {
+    "nomeArtista": "William",
+    "discord": "seu_discord_aqui",
+    "descricaoHero": "Artes profissionais para servidores e canais de Minecraft",
+    "precos": {
+      "fotoPerfil": "R$ 5,50",
+      "thumbnail": "R$ 4,00",
+      "banner": "R$ 5,65",
+      "logo": "R$ 6,00"
+    }
+  }
+}
