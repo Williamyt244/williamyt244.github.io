@@ -30,12 +30,10 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
   erro.classList.remove('show');
-
   const { error } = await supabase.auth.signInWithPassword({
     email: document.getElementById('loginEmail').value,
     password: document.getElementById('loginSenha').value,
   });
-
   if (error) {
     erro.textContent = '❌ Email ou senha incorretos!';
     erro.classList.add('show');
@@ -83,9 +81,14 @@ function setupAbas() {
   });
 }
 
+// ==========================================
 // PORTFÓLIOS
+// ==========================================
 async function carregarPortfoliosAdmin() {
-  const { data } = await supabase.from('portfolios').select('*').order('criado_em', { ascending: false });
+  const { data } = await supabase
+    .from('portfolios')
+    .select('*')
+    .order('criado_em', { ascending: false });
   portfolios = data || [];
   renderizarPortfoliosAdmin();
 }
@@ -134,13 +137,19 @@ function setupPortfolioForm() {
   document.getElementById('fecharFormPort2').addEventListener('click', fechar);
 
   uploadArea.addEventListener('click', () => inputFile.click());
-  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.style.borderColor = '#7c3aed'; });
+  uploadArea.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadArea.style.borderColor = '#7c3aed';
+  });
   uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = ''; });
   uploadArea.addEventListener('drop', e => {
-    e.preventDefault(); uploadArea.style.borderColor = '';
+    e.preventDefault();
+    uploadArea.style.borderColor = '';
     if (e.dataTransfer.files[0]) selecionarImagem(e.dataTransfer.files[0]);
   });
-  inputFile.addEventListener('change', () => { if (inputFile.files[0]) selecionarImagem(inputFile.files[0]); });
+  inputFile.addEventListener('change', () => {
+    if (inputFile.files[0]) selecionarImagem(inputFile.files[0]);
+  });
 
   document.getElementById('removerImg').addEventListener('click', () => {
     imagemFile = null; imagemUrlAtual = '';
@@ -165,7 +174,7 @@ function selecionarImagem(file) {
 }
 
 function limparFormPortfolio() {
-  ['pTitulo','pDescricao'].forEach(id => document.getElementById(id).value = '');
+  ['pTitulo', 'pDescricao'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('pCategoria').value = '';
   document.getElementById('pDestaque').checked = false;
   document.getElementById('uploadPreview').style.display = 'none';
@@ -222,7 +231,7 @@ async function salvarPortfolio() {
       notif('✅ Trabalho adicionado!');
     }
 
-    document.getElementById('formPortfolio').style.display = 'none';
+    form.style.display = 'none';
     limparFormPortfolio();
     await carregarPortfoliosAdmin();
   } catch(e) {
@@ -239,7 +248,8 @@ window.editarPortfolio = function(id) {
   const item = portfolios.find(p => p.id === id);
   if (!item) return;
   modoEdicao = true; idEdicao = id;
-  imagemUrlAtual = item.imagem; imagemPathAtual = item.imagem_path || '';
+  imagemUrlAtual = item.imagem;
+  imagemPathAtual = item.imagem_path || '';
 
   document.getElementById('pTitulo').value = item.titulo;
   document.getElementById('pCategoria').value = item.categoria;
@@ -249,8 +259,10 @@ window.editarPortfolio = function(id) {
   document.getElementById('previewImg').src = item.imagem;
   document.getElementById('uploadPreview').style.display = 'block';
   document.getElementById('uploadArea').style.display = 'none';
-  document.getElementById('formPortfolio').style.display = 'block';
-  document.getElementById('formPortfolio').scrollIntoView({ behavior: 'smooth' });
+
+  const form = document.getElementById('formPortfolio');
+  form.style.display = 'block';
+  form.scrollIntoView({ behavior: 'smooth' });
 };
 
 window.deletarPortfolio = async function(id) {
@@ -260,16 +272,27 @@ window.deletarPortfolio = async function(id) {
     if (item?.imagem_path) {
       await supabase.storage.from('portfolios').remove([item.imagem_path]);
     }
-    await supabase.from('portfolios').delete().eq('id', id);
+    const { error } = await supabase.from('portfolios').delete().eq('id', id);
+    if (error) throw error;
     notif('🗑️ Excluído!');
     await carregarPortfoliosAdmin();
-  } catch(e) { notif('❌ Erro ao excluir!', 'erro'); }
+  } catch(e) {
+    console.error(e);
+    notif('❌ Erro ao excluir!', 'erro');
+  }
 };
 
+// ==========================================
 // TEXTOS
+// ==========================================
 async function carregarTextosAdmin() {
-  const { data } = await supabase.from('site_config').select('*').eq('id','config').single();
+  const { data } = await supabase
+    .from('site_config')
+    .select('*')
+    .eq('id', 'config')
+    .single();
   if (!data) return;
+
   setValue('tNomeSite', data.nomesite || '');
   setValue('tHeroBadge', data.hero_badge || '');
   setValue('tHeroTitulo', data.hero_titulo || '');
@@ -287,7 +310,10 @@ async function carregarTextosAdmin() {
   setValue('tFooterDesc', data.footer_desc || '');
   setValue('tFooterCopy', data.footer_copy || '');
 
-  const { data: stats } = await supabase.from('stats').select('*').order('ordem');
+  const { data: stats } = await supabase
+    .from('stats')
+    .select('*')
+    .order('ordem');
   statsLista = stats || [];
   renderizarStatsEditor();
 }
@@ -298,11 +324,11 @@ function renderizarStatsEditor() {
   el.innerHTML = statsLista.map((s, i) => `
     <div class="stat-edit-item">
       <div class="field" style="margin:0">
-        <input type="text" value="${s.numero}" placeholder="100%"
+        <input type="text" value="${s.numero || ''}" placeholder="100%"
                oninput="statsLista[${i}].numero=this.value"/>
       </div>
       <div class="field" style="margin:0">
-        <input type="text" value="${s.label}" placeholder="Satisfação"
+        <input type="text" value="${s.label || ''}" placeholder="Satisfação"
                oninput="statsLista[${i}].label=this.value"/>
       </div>
       <button class="btn-remove-item" onclick="removerStat(${i})">
@@ -312,57 +338,92 @@ function renderizarStatsEditor() {
   `).join('');
 }
 
-window.removerStat = function(i) { statsLista.splice(i,1); renderizarStatsEditor(); };
+window.removerStat = function(i) {
+  statsLista.splice(i, 1);
+  renderizarStatsEditor();
+};
 
 document.getElementById('addStat').addEventListener('click', () => {
-  statsLista.push({ numero:'', label:'', ordem: statsLista.length+1 });
+  statsLista.push({ numero: '', label: '', ordem: statsLista.length + 1 });
   renderizarStatsEditor();
 });
 
 function setupSalvarTextos() {
   document.getElementById('salvarTextos').addEventListener('click', async () => {
     const btn = document.getElementById('salvarTextos');
-    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      await supabase.from('site_config').update({
-        nomesite: getValue('tNomeSite'),
-        hero_badge: getValue('tHeroBadge'),
-        hero_titulo: getValue('tHeroTitulo'),
-        hero_titulo_destaque: getValue('tHeroDestaque'),
-        hero_subtitulo: getValue('tHeroSub'),
-        btn_portfolio: getValue('tBtn1'),
-        btn_solicitar: getValue('tBtn2'),
-        btn_nav: getValue('tBtnNav'),
-        servicos_tag: getValue('tServTag'),
-        servicos_subtitulo: getValue('tServSub'),
-        precos_subtitulo: getValue('tPrecSub'),
-        combo_texto: getValue('tCombo'),
-        contato_subtitulo: getValue('tContSub'),
-        contato_desc: getValue('tContDesc'),
-        footer_desc: getValue('tFooterDesc'),
-        footer_copy: getValue('tFooterCopy'),
-        atualizado_em: new Date().toISOString(),
-      }).eq('id','config');
+      // Salvar config
+      const { error: errConfig } = await supabase
+        .from('site_config')
+        .update({
+          nomesite: getValue('tNomeSite'),
+          hero_badge: getValue('tHeroBadge'),
+          hero_titulo: getValue('tHeroTitulo'),
+          hero_titulo_destaque: getValue('tHeroDestaque'),
+          hero_subtitulo: getValue('tHeroSub'),
+          btn_portfolio: getValue('tBtn1'),
+          btn_solicitar: getValue('tBtn2'),
+          btn_nav: getValue('tBtnNav'),
+          servicos_tag: getValue('tServTag'),
+          servicos_subtitulo: getValue('tServSub'),
+          precos_subtitulo: getValue('tPrecSub'),
+          combo_texto: getValue('tCombo'),
+          contato_subtitulo: getValue('tContSub'),
+          contato_desc: getValue('tContDesc'),
+          footer_desc: getValue('tFooterDesc'),
+          footer_copy: getValue('tFooterCopy'),
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq('id', 'config');
 
-      await supabase.from('stats').delete().neq('id', 0);
-      if (statsLista.length) {
-        await supabase.from('stats').insert(
-          statsLista.map((s, i) => ({ numero: s.numero, label: s.label, ordem: i+1 }))
-        );
+      if (errConfig) throw errConfig;
+
+      // Salvar stats: pegar IDs existentes e atualizar/inserir/deletar
+      const { data: statsExistentes } = await supabase
+        .from('stats')
+        .select('id')
+        .order('ordem');
+
+      const idsExistentes = (statsExistentes || []).map(s => s.id);
+
+      // Deletar todos e reinserir de forma segura
+      if (idsExistentes.length > 0) {
+        await supabase.from('stats').delete().in('id', idsExistentes);
       }
+
+      if (statsLista.length > 0) {
+        const novosStats = statsLista.map((s, i) => ({
+          numero: s.numero,
+          label: s.label,
+          ordem: i + 1
+        }));
+        const { error: errStats } = await supabase.from('stats').insert(novosStats);
+        if (errStats) throw errStats;
+      }
+
       notif('✅ Textos salvos!');
-    } catch(e) { notif('❌ Erro!', 'erro'); }
-    finally {
+      await carregarTextosAdmin();
+    } catch(e) {
+      console.error(e);
+      notif('❌ Erro ao salvar textos!', 'erro');
+    } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-save"></i> Salvar Textos';
     }
   });
 }
 
-// SERVIÇOS
+// ==========================================
+// SERVIÇOS - SEM DUPLICAÇÃO
+// ==========================================
 async function carregarServicosAdmin() {
-  const { data } = await supabase.from('servicos').select('*').order('ordem');
-  servicosLista = data || [];
+  const { data } = await supabase
+    .from('servicos')
+    .select('*')
+    .order('ordem');
+  servicosLista = (data || []).map(s => ({ ...s }));
   renderizarServicosAdmin();
 }
 
@@ -370,45 +431,65 @@ function renderizarServicosAdmin() {
   const el = document.getElementById('servicosAdminLista');
   if (!el) return;
   if (!servicosLista.length) {
-    el.innerHTML = '<div class="admin-vazio"><i class="fas fa-concierge-bell"></i><p>Nenhum serviço.</p></div>';
+    el.innerHTML = `<div class="admin-vazio">
+      <i class="fas fa-concierge-bell"></i>
+      <p>Nenhum serviço. Clique em "Novo Serviço".</p>
+    </div>`;
     return;
   }
   el.innerHTML = servicosLista.map((s, i) => `
     <div class="servico-edit-item">
       <div class="servico-edit-header">
         <span>${s.titulo || 'Sem título'}</span>
-        <button class="btn-remove-item" onclick="removerServico(${i})"><i class="fas fa-trash"></i></button>
+        <button class="btn-remove-item" onclick="removerServico(${i})">
+          <i class="fas fa-trash"></i>
+        </button>
       </div>
       <div class="form-grid">
-        <div class="field"><label>Título</label>
-          <input type="text" value="${s.titulo}" oninput="servicosLista[${i}].titulo=this.value"/></div>
-        <div class="field"><label>Ícone (Font Awesome)</label>
-          <input type="text" value="${s.icone}" placeholder="fas fa-palette"
-                 oninput="servicosLista[${i}].icone=this.value"/></div>
-        <div class="field full"><label>Descrição</label>
-          <textarea rows="2" oninput="servicosLista[${i}].descricao=this.value">${s.descricao}</textarea></div>
-        <div class="field full"><label>Cor (CSS gradient)</label>
-          <input type="text" value="${s.cor}" oninput="servicosLista[${i}].cor=this.value"/></div>
+        <div class="field">
+          <label>Título</label>
+          <input type="text" value="${s.titulo || ''}"
+                 oninput="servicosLista[${i}].titulo=this.value"/>
+        </div>
+        <div class="field">
+          <label>Ícone (Font Awesome)</label>
+          <input type="text" value="${s.icone || ''}" placeholder="fas fa-palette"
+                 oninput="servicosLista[${i}].icone=this.value"/>
+        </div>
+        <div class="field full">
+          <label>Descrição</label>
+          <textarea rows="2" oninput="servicosLista[${i}].descricao=this.value">${s.descricao || ''}</textarea>
+        </div>
+        <div class="field full">
+          <label>Cor (CSS gradient)</label>
+          <input type="text" value="${s.cor || ''}"
+                 oninput="servicosLista[${i}].cor=this.value"/>
+        </div>
         <div class="field">
           <label class="check-label">
-            <input type="checkbox" ${s.destaque?'checked':''} onchange="servicosLista[${i}].destaque=this.checked"/>
+            <input type="checkbox" ${s.destaque ? 'checked' : ''}
+                   onchange="servicosLista[${i}].destaque=this.checked"/>
             <span class="check-box"></span> ⭐ Destaque
           </label>
         </div>
-        <div class="field"><label>Badge texto</label>
-          <input type="text" value="${s.badge_texto||''}" placeholder="⭐ Mais Popular"
-                 oninput="servicosLista[${i}].badge_texto=this.value"/></div>
+        <div class="field">
+          <label>Badge texto</label>
+          <input type="text" value="${s.badge_texto || ''}" placeholder="⭐ Mais Popular"
+                 oninput="servicosLista[${i}].badge_texto=this.value"/>
+        </div>
       </div>
       <div class="servico-edit-tags">
         <label>Tags</label>
-        <div class="tags-lista">
-          ${(s.tags||[]).map((t,ti)=>`
-            <div class="tag-item"><span>${t.texto}</span>
-              <button onclick="removerTag(${i},${ti})">×</button></div>`).join('')}
+        <div class="tags-lista" id="tags-s-${i}">
+          ${(s.tags || []).map((t, ti) => `
+            <div class="tag-item">
+              <span>${t.texto}</span>
+              <button onclick="removerTagServico(${i},${ti})">×</button>
+            </div>`).join('')}
         </div>
         <div class="tag-add-form">
-          <input type="text" id="tagInput-${i}" placeholder="Nova tag..."/>
-          <button onclick="adicionarTag(${i})">+ Tag</button>
+          <input type="text" id="tagInputS-${i}" placeholder="Nova tag..."/>
+          <button onclick="adicionarTagServico(${i})">+ Tag</button>
         </div>
       </div>
     </div>
@@ -416,55 +497,100 @@ function renderizarServicosAdmin() {
 }
 
 window.removerServico = function(i) {
-  if (!confirm('Remover?')) return;
-  servicosLista.splice(i,1); renderizarServicosAdmin();
+  if (!confirm('Remover este serviço?')) return;
+  servicosLista.splice(i, 1);
+  renderizarServicosAdmin();
 };
 
-window.adicionarTag = function(i) {
-  const input = document.getElementById(`tagInput-${i}`);
-  const txt = input.value.trim(); if (!txt) return;
+window.adicionarTagServico = function(i) {
+  const input = document.getElementById(`tagInputS-${i}`);
+  const txt = input.value.trim();
+  if (!txt) return;
   if (!servicosLista[i].tags) servicosLista[i].tags = [];
   servicosLista[i].tags.push({ texto: txt, destaque: false });
-  input.value = ''; renderizarServicosAdmin();
+  input.value = '';
+  renderizarServicosAdmin();
 };
 
-window.removerTag = function(si, ti) {
-  servicosLista[si].tags.splice(ti,1); renderizarServicosAdmin();
+window.removerTagServico = function(si, ti) {
+  servicosLista[si].tags.splice(ti, 1);
+  renderizarServicosAdmin();
 };
 
 function setupServicos() {
   document.getElementById('btnNovoServico').addEventListener('click', () => {
-    servicosLista.push({ titulo:'Novo Serviço', descricao:'Descrição.', icone:'fas fa-palette',
-      cor:'linear-gradient(135deg,#7c3aed,#a855f7)', destaque:false, badge_texto:'', tags:[], ordem:servicosLista.length+1 });
+    servicosLista.push({
+      titulo: 'Novo Serviço',
+      descricao: 'Descrição do serviço.',
+      icone: 'fas fa-palette',
+      cor: 'linear-gradient(135deg,#7c3aed,#a855f7)',
+      destaque: false,
+      badge_texto: '',
+      tags: [],
+      ordem: servicosLista.length + 1
+    });
     renderizarServicosAdmin();
-    document.getElementById('servicosAdminLista').lastElementChild?.scrollIntoView({behavior:'smooth'});
+    document.getElementById('servicosAdminLista')
+      .lastElementChild?.scrollIntoView({ behavior: 'smooth' });
   });
 
   document.getElementById('salvarServicos').addEventListener('click', async () => {
     const btn = document.getElementById('salvarServicos');
-    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      await supabase.from('servicos').delete().neq('id', 0);
-      if (servicosLista.length) {
-        await supabase.from('servicos').insert(
-          servicosLista.map((s,i) => ({
-            titulo:s.titulo, descricao:s.descricao, icone:s.icone,
-            cor:s.cor, destaque:s.destaque, badge_texto:s.badge_texto||'',
-            tags:s.tags||[], ordem:i+1
-          }))
-        );
+      // Pegar IDs existentes para deletar apenas eles
+      const { data: existentes } = await supabase
+        .from('servicos')
+        .select('id');
+
+      const ids = (existentes || []).map(s => s.id);
+
+      if (ids.length > 0) {
+        const { error: errDel } = await supabase
+          .from('servicos')
+          .delete()
+          .in('id', ids);
+        if (errDel) throw errDel;
       }
+
+      if (servicosLista.length > 0) {
+        const novos = servicosLista.map((s, i) => ({
+          titulo: s.titulo,
+          descricao: s.descricao,
+          icone: s.icone,
+          cor: s.cor,
+          destaque: s.destaque || false,
+          badge_texto: s.badge_texto || '',
+          tags: s.tags || [],
+          ordem: i + 1
+        }));
+
+        const { error: errIns } = await supabase.from('servicos').insert(novos);
+        if (errIns) throw errIns;
+      }
+
       notif('✅ Serviços salvos!');
       await carregarServicosAdmin();
-    } catch(e) { notif('❌ Erro!','erro'); }
-    finally { btn.disabled=false; btn.innerHTML='<i class="fas fa-save"></i> Salvar Serviços'; }
+    } catch(e) {
+      console.error(e);
+      notif('❌ Erro ao salvar serviços!', 'erro');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> Salvar Serviços';
+    }
   });
 }
 
-// PREÇOS
+// ==========================================
+// PREÇOS - SEM DUPLICAÇÃO
+// ==========================================
 async function carregarPrecosAdmin() {
-  const { data } = await supabase.from('precos').select('*').order('ordem');
-  precosLista = data || [];
+  const { data } = await supabase
+    .from('precos')
+    .select('*')
+    .order('ordem');
+  precosLista = (data || []).map(p => ({ ...p }));
   renderizarPrecosAdmin();
 }
 
@@ -472,124 +598,262 @@ function renderizarPrecosAdmin() {
   const el = document.getElementById('precosAdminLista');
   if (!el) return;
   if (!precosLista.length) {
-    el.innerHTML = '<div class="admin-vazio"><i class="fas fa-tags"></i><p>Nenhum preço.</p></div>';
+    el.innerHTML = `<div class="admin-vazio">
+      <i class="fas fa-tags"></i>
+      <p>Nenhum preço. Clique em "Novo Preço".</p>
+    </div>`;
     return;
   }
-  el.innerHTML = precosLista.map((p,i) => `
+  el.innerHTML = precosLista.map((p, i) => `
     <div class="preco-edit-item">
-      <div class="field" style="margin:0"><label style="font-size:11px">Emoji</label>
-        <input type="text" value="${p.icone}" maxlength="4" style="text-align:center"
-               oninput="precosLista[${i}].icone=this.value"/></div>
-      <div class="field" style="margin:0"><label style="font-size:11px">Nome</label>
-        <input type="text" value="${p.nome}" oninput="precosLista[${i}].nome=this.value"/></div>
-      <div class="field" style="margin:0"><label style="font-size:11px">Valor</label>
-        <input type="text" value="${p.valor}" oninput="precosLista[${i}].valor=this.value"/></div>
-      <div class="field" style="margin:0"><label style="font-size:11px">Obs</label>
-        <input type="text" value="${p.obs}" oninput="precosLista[${i}].obs=this.value"/></div>
-      <button class="btn-remove-item" onclick="removerPreco(${i})"><i class="fas fa-trash"></i></button>
+      <div class="field" style="margin:0">
+        <label style="font-size:11px">Emoji</label>
+        <input type="text" value="${p.icone || ''}" maxlength="4"
+               style="text-align:center"
+               oninput="precosLista[${i}].icone=this.value"/>
+      </div>
+      <div class="field" style="margin:0">
+        <label style="font-size:11px">Nome</label>
+        <input type="text" value="${p.nome || ''}"
+               oninput="precosLista[${i}].nome=this.value"/>
+      </div>
+      <div class="field" style="margin:0">
+        <label style="font-size:11px">Valor</label>
+        <input type="text" value="${p.valor || ''}"
+               oninput="precosLista[${i}].valor=this.value"/>
+      </div>
+      <div class="field" style="margin:0">
+        <label style="font-size:11px">Obs</label>
+        <input type="text" value="${p.obs || ''}"
+               oninput="precosLista[${i}].obs=this.value"/>
+      </div>
+      <button class="btn-remove-item" onclick="removerPreco(${i})">
+        <i class="fas fa-trash"></i>
+      </button>
     </div>
   `).join('');
 }
 
 window.removerPreco = function(i) {
-  if (!confirm('Remover?')) return;
-  precosLista.splice(i,1); renderizarPrecosAdmin();
+  if (!confirm('Remover este preço?')) return;
+  precosLista.splice(i, 1);
+  renderizarPrecosAdmin();
 };
 
 function setupPrecos() {
   document.getElementById('btnNovoPreco').addEventListener('click', () => {
-    precosLista.push({ icone:'🎨', nome:'Novo', valor:'R$ 0,00', obs:'', ordem:precosLista.length+1 });
+    precosLista.push({
+      icone: '🎨',
+      nome: 'Novo Serviço',
+      valor: 'R$ 0,00',
+      obs: '',
+      ordem: precosLista.length + 1
+    });
     renderizarPrecosAdmin();
   });
 
   document.getElementById('salvarPrecos').addEventListener('click', async () => {
     const btn = document.getElementById('salvarPrecos');
-    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      await supabase.from('precos').delete().neq('id', 0);
-      if (precosLista.length) {
-        await supabase.from('precos').insert(
-          precosLista.map((p,i) => ({ icone:p.icone, nome:p.nome, valor:p.valor, obs:p.obs, ordem:i+1 }))
-        );
+      const { data: existentes } = await supabase
+        .from('precos')
+        .select('id');
+
+      const ids = (existentes || []).map(p => p.id);
+
+      if (ids.length > 0) {
+        const { error: errDel } = await supabase
+          .from('precos')
+          .delete()
+          .in('id', ids);
+        if (errDel) throw errDel;
       }
+
+      if (precosLista.length > 0) {
+        const novos = precosLista.map((p, i) => ({
+          icone: p.icone,
+          nome: p.nome,
+          valor: p.valor,
+          obs: p.obs || '',
+          ordem: i + 1
+        }));
+
+        const { error: errIns } = await supabase.from('precos').insert(novos);
+        if (errIns) throw errIns;
+      }
+
       notif('✅ Preços salvos!');
       await carregarPrecosAdmin();
-    } catch(e) { notif('❌ Erro!','erro'); }
-    finally { btn.disabled=false; btn.innerHTML='<i class="fas fa-save"></i> Salvar Preços'; }
+    } catch(e) {
+      console.error(e);
+      notif('❌ Erro ao salvar preços!', 'erro');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> Salvar Preços';
+    }
   });
 }
 
-// CONTATO
+// ==========================================
+// CONTATO - SEM DUPLICAÇÃO
+// ==========================================
 async function carregarContatoAdmin() {
-  const { data: config } = await supabase.from('site_config').select('discord').eq('id','config').single();
+  const { data: config } = await supabase
+    .from('site_config')
+    .select('discord')
+    .eq('id', 'config')
+    .single();
   if (config) setValue('cDiscord', config.discord || '');
-  const { data } = await supabase.from('contato_info').select('*').order('ordem');
-  infoItems = data || [];
+
+  const { data } = await supabase
+    .from('contato_info')
+    .select('*')
+    .order('ordem');
+  infoItems = (data || []).map(i => ({ ...i }));
   renderizarInfoEditor();
 }
 
 function renderizarInfoEditor() {
   const el = document.getElementById('infoItemsEditor');
   if (!el) return;
-  el.innerHTML = infoItems.map((item,i) => `
+  el.innerHTML = infoItems.map((item, i) => `
     <div class="info-edit-item">
-      <div class="field" style="margin:0"><label style="font-size:11px">Emoji</label>
-        <input type="text" value="${item.icone}" maxlength="4" style="text-align:center"
-               oninput="infoItems[${i}].icone=this.value"/></div>
-      <div class="field" style="margin:0"><label style="font-size:11px">Título</label>
-        <input type="text" value="${item.titulo}" oninput="infoItems[${i}].titulo=this.value"/></div>
-      <div class="field" style="margin:0"><label style="font-size:11px">Texto</label>
-        <input type="text" value="${item.texto}" oninput="infoItems[${i}].texto=this.value"/></div>
-      <button class="btn-remove-item" onclick="removerInfoItem(${i})"><i class="fas fa-trash"></i></button>
+      <div class="field" style="margin:0">
+        <label style="font-size:11px">Emoji</label>
+        <input type="text" value="${item.icone || ''}" maxlength="4"
+               style="text-align:center"
+               oninput="infoItems[${i}].icone=this.value"/>
+      </div>
+      <div class="field" style="margin:0">
+        <label style="font-size:11px">Título</label>
+        <input type="text" value="${item.titulo || ''}"
+               oninput="infoItems[${i}].titulo=this.value"/>
+      </div>
+      <div class="field" style="margin:0">
+        <label style="font-size:11px">Texto</label>
+        <input type="text" value="${item.texto || ''}"
+               oninput="infoItems[${i}].texto=this.value"/>
+      </div>
+      <button class="btn-remove-item" onclick="removerInfoItem(${i})">
+        <i class="fas fa-trash"></i>
+      </button>
     </div>
   `).join('');
 }
 
-window.removerInfoItem = function(i) { infoItems.splice(i,1); renderizarInfoEditor(); };
+window.removerInfoItem = function(i) {
+  infoItems.splice(i, 1);
+  renderizarInfoEditor();
+};
 
 function setupContato() {
   document.getElementById('addInfoItem').addEventListener('click', () => {
-    infoItems.push({ icone:'💡', titulo:'Novo', texto:'Descrição', ordem:infoItems.length+1 });
+    infoItems.push({
+      icone: '💡',
+      titulo: 'Novo Item',
+      texto: 'Descrição aqui',
+      ordem: infoItems.length + 1
+    });
     renderizarInfoEditor();
   });
 
   document.getElementById('salvarContato').addEventListener('click', async () => {
     const btn = document.getElementById('salvarContato');
-    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      await supabase.from('site_config').update({ discord: getValue('cDiscord') }).eq('id','config');
-      await supabase.from('contato_info').delete().neq('id', 0);
-      if (infoItems.length) {
-        await supabase.from('contato_info').insert(
-          infoItems.map((item,i) => ({ icone:item.icone, titulo:item.titulo, texto:item.texto, ordem:i+1 }))
-        );
+      // Salvar discord
+      const { error: errDisc } = await supabase
+        .from('site_config')
+        .update({ discord: getValue('cDiscord') })
+        .eq('id', 'config');
+      if (errDisc) throw errDisc;
+
+      // Salvar info items sem duplicar
+      const { data: existentes } = await supabase
+        .from('contato_info')
+        .select('id');
+
+      const ids = (existentes || []).map(i => i.id);
+
+      if (ids.length > 0) {
+        const { error: errDel } = await supabase
+          .from('contato_info')
+          .delete()
+          .in('id', ids);
+        if (errDel) throw errDel;
       }
+
+      if (infoItems.length > 0) {
+        const novos = infoItems.map((item, i) => ({
+          icone: item.icone,
+          titulo: item.titulo,
+          texto: item.texto,
+          ordem: i + 1
+        }));
+
+        const { error: errIns } = await supabase.from('contato_info').insert(novos);
+        if (errIns) throw errIns;
+      }
+
       notif('✅ Contato salvo!');
       await carregarContatoAdmin();
-    } catch(e) { notif('❌ Erro!','erro'); }
-    finally { btn.disabled=false; btn.innerHTML='<i class="fas fa-save"></i> Salvar Contato'; }
+    } catch(e) {
+      console.error(e);
+      notif('❌ Erro ao salvar contato!', 'erro');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> Salvar Contato';
+    }
   });
 }
 
+// ==========================================
 // APARÊNCIA
+// ==========================================
 async function carregarAparenciaAdmin() {
-  const { data } = await supabase.from('site_config').select('*').eq('id','config').single();
+  const { data } = await supabase
+    .from('site_config')
+    .select('*')
+    .eq('id', 'config')
+    .single();
   if (!data) return;
-  if (data.cor_primaria) { setValue('corPrimariaHex', data.cor_primaria); document.getElementById('corPrimaria').value = data.cor_primaria; }
-  if (data.cor_secundaria) { setValue('corSecundariaHex', data.cor_secundaria); document.getElementById('corSecundaria').value = data.cor_secundaria; }
-  if (data.cor_fundo) { setValue('corFundoHex', data.cor_fundo); document.getElementById('corFundo').value = data.cor_fundo; }
-  if (data.cor_texto) { setValue('corTextoHex', data.cor_texto); document.getElementById('corTexto').value = data.cor_texto; }
+
+  if (data.cor_primaria) {
+    setValue('corPrimariaHex', data.cor_primaria);
+    document.getElementById('corPrimaria').value = data.cor_primaria;
+  }
+  if (data.cor_secundaria) {
+    setValue('corSecundariaHex', data.cor_secundaria);
+    document.getElementById('corSecundaria').value = data.cor_secundaria;
+  }
+  if (data.cor_fundo) {
+    setValue('corFundoHex', data.cor_fundo);
+    document.getElementById('corFundo').value = data.cor_fundo;
+  }
+  if (data.cor_texto) {
+    setValue('corTextoHex', data.cor_texto);
+    document.getElementById('corTexto').value = data.cor_texto;
+  }
   if (data.logo_icone) setValue('logoIcone', data.logo_icone);
   atualizarPreviewCores();
 }
 
-['corPrimaria','corSecundaria','corFundo','corTexto'].forEach(id => {
+['corPrimaria', 'corSecundaria', 'corFundo', 'corTexto'].forEach(id => {
   const picker = document.getElementById(id);
   const hex = document.getElementById(`${id}Hex`);
   if (!picker || !hex) return;
-  picker.addEventListener('input', () => { hex.value = picker.value; atualizarPreviewCores(); });
+  picker.addEventListener('input', () => {
+    hex.value = picker.value;
+    atualizarPreviewCores();
+  });
   hex.addEventListener('input', () => {
-    if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) { picker.value = hex.value; atualizarPreviewCores(); }
+    if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) {
+      picker.value = hex.value;
+      atualizarPreviewCores();
+    }
   });
 });
 
@@ -599,44 +863,85 @@ function atualizarPreviewCores() {
   const btn = document.getElementById('previewBtn');
   const txt = document.getElementById('previewText');
   if (btn) btn.style.background = `linear-gradient(135deg,${p},${s})`;
-  if (txt) { txt.style.background=`linear-gradient(135deg,${p},${s})`;txt.style.webkitBackgroundClip='text';txt.style.webkitTextFillColor='transparent'; }
+  if (txt) {
+    txt.style.background = `linear-gradient(135deg,${p},${s})`;
+    txt.style.webkitBackgroundClip = 'text';
+    txt.style.webkitTextFillColor = 'transparent';
+  }
 }
 
 function setupAparencia() {
   document.getElementById('salvarAparencia').addEventListener('click', async () => {
     const btn = document.getElementById('salvarAparencia');
-    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      await supabase.from('site_config').update({
-        cor_primaria: getValue('corPrimariaHex'),
-        cor_secundaria: getValue('corSecundariaHex'),
-        cor_fundo: getValue('corFundoHex'),
-        cor_texto: getValue('corTextoHex'),
-        logo_icone: getValue('logoIcone'),
-      }).eq('id','config');
+      const { error } = await supabase
+        .from('site_config')
+        .update({
+          cor_primaria: getValue('corPrimariaHex'),
+          cor_secundaria: getValue('corSecundariaHex'),
+          cor_fundo: getValue('corFundoHex'),
+          cor_texto: getValue('corTextoHex'),
+          logo_icone: getValue('logoIcone'),
+        })
+        .eq('id', 'config');
+      if (error) throw error;
       notif('✅ Aparência salva! Recarregue o site.');
-    } catch(e) { notif('❌ Erro!','erro'); }
-    finally { btn.disabled=false; btn.innerHTML='<i class="fas fa-save"></i> Salvar Aparência'; }
+    } catch(e) {
+      console.error(e);
+      notif('❌ Erro ao salvar aparência!', 'erro');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> Salvar Aparência';
+    }
   });
 }
 
+// ==========================================
 // UTILITÁRIOS
-function getValue(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
-function setValue(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+// ==========================================
+function getValue(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+function setValue(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
 function formatCat(cat) {
-  return {logo:'Logo',thumbnail:'Thumbnail',banner:'Banner',fotoperfil:'Foto de Perfil',outro:'Outro'}[cat] || cat;
+  return {
+    logo: 'Logo',
+    thumbnail: 'Thumbnail',
+    banner: 'Banner',
+    fotoperfil: 'Foto de Perfil',
+    outro: 'Outro'
+  }[cat] || cat;
 }
 
 function notif(msg, tipo = 'ok') {
   const n = document.createElement('div');
-  const cor = tipo==='erro' ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)';
-  const borda = tipo==='erro' ? 'rgba(239,68,68,0.4)' : 'rgba(16,185,129,0.4)';
-  n.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:${cor};border:1px solid ${borda};color:#e2e8f0;padding:13px 26px;border-radius:50px;font-size:14px;font-weight:500;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,0.5);font-family:'Inter',sans-serif;white-space:nowrap`;
+  const cor = tipo === 'erro' ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)';
+  const borda = tipo === 'erro' ? 'rgba(239,68,68,0.4)' : 'rgba(16,185,129,0.4)';
+  n.style.cssText = `
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+    background:${cor};border:1px solid ${borda};color:#e2e8f0;
+    padding:13px 26px;border-radius:50px;font-size:14px;font-weight:500;
+    z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,0.5);
+    font-family:'Inter',sans-serif;white-space:nowrap;
+  `;
   n.textContent = msg;
   document.body.appendChild(n);
-  setTimeout(() => { n.style.transition='opacity 0.3s'; n.style.opacity='0'; setTimeout(()=>n.remove(),300); }, 3000);
+  setTimeout(() => {
+    n.style.transition = 'opacity 0.3s';
+    n.style.opacity = '0';
+    setTimeout(() => n.remove(), 300);
+  }, 3000);
 }
 
+// Expor variáveis globais necessárias
 window.statsLista = statsLista;
 window.servicosLista = servicosLista;
 window.precosLista = precosLista;
