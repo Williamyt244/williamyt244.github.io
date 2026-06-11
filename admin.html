@@ -3,32 +3,39 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin - WilliamArts</title>
+  <title>Admin - WilliamDesign</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="admin.css"/>
 </head>
 <body>
 
-  <!-- TELA DE LOGIN -->
+  <!-- LOGIN -->
   <div class="login-screen" id="loginScreen">
     <div class="login-card">
-      <div class="login-logo">⚔️ <span>William<span class="hl">Arts</span></span></div>
+      <div class="login-logo">🎨 <span>William<span class="hl">Design</span></span></div>
       <h2>Painel Administrativo</h2>
-      <p>Apenas o dono pode acessar esta área</p>
+      <p>Faça login para continuar</p>
       <form id="loginForm">
-        <div class="input-group">
+        <div class="field">
+          <label>E-mail</label>
+          <div class="input-wrap">
+            <i class="fas fa-envelope"></i>
+            <input type="email" id="loginEmail" placeholder="seu@email.com" required/>
+          </div>
+        </div>
+        <div class="field">
           <label>Senha</label>
           <div class="input-wrap">
             <i class="fas fa-lock"></i>
-            <input type="password" id="senhaInput" placeholder="Digite sua senha..." required/>
+            <input type="password" id="loginSenha" placeholder="Sua senha..." required/>
             <button type="button" class="eye-btn" id="eyeBtn">
               <i class="fas fa-eye"></i>
             </button>
           </div>
         </div>
-        <div class="error-msg" id="erroLogin">❌ Senha incorreta!</div>
-        <button type="submit" class="btn-login">
+        <div class="error-msg" id="erroLogin"></div>
+        <button type="submit" class="btn-login" id="btnLogin">
           <i class="fas fa-sign-in-alt"></i> Entrar
         </button>
       </form>
@@ -36,22 +43,17 @@
     </div>
   </div>
 
-  <!-- PAINEL ADMIN -->
+  <!-- PAINEL -->
   <div class="admin-panel" id="adminPanel" style="display:none">
-
-    <!-- SIDEBAR -->
     <aside class="sidebar">
-      <div class="sidebar-logo">⚔️ <span>Admin<span class="hl">Panel</span></span></div>
+      <div class="sidebar-logo">🎨 <span>Admin<span class="hl">Panel</span></span></div>
       <nav class="sidebar-nav">
-        <button class="nav-btn active" data-aba="portfolios">
-          <i class="fas fa-images"></i> Portfólios
-        </button>
-        <button class="nav-btn" data-aba="config">
-          <i class="fas fa-cog"></i> Configurações
-        </button>
-        <button class="nav-btn" data-aba="instrucoes">
-          <i class="fas fa-book"></i> Instruções
-        </button>
+        <button class="nav-btn active" data-aba="portfolio"><i class="fas fa-images"></i> Portfólios</button>
+        <button class="nav-btn" data-aba="textos"><i class="fas fa-font"></i> Textos</button>
+        <button class="nav-btn" data-aba="servicos"><i class="fas fa-concierge-bell"></i> Serviços</button>
+        <button class="nav-btn" data-aba="precos"><i class="fas fa-tags"></i> Preços</button>
+        <button class="nav-btn" data-aba="contato"><i class="fas fa-headset"></i> Contato</button>
+        <button class="nav-btn" data-aba="aparencia"><i class="fas fa-paint-brush"></i> Aparência</button>
       </nav>
       <div class="sidebar-footer">
         <a href="index.html" target="_blank" class="ver-site-btn">
@@ -63,220 +65,244 @@
       </div>
     </aside>
 
-    <!-- CONTEÚDO PRINCIPAL -->
     <main class="admin-main">
 
-      <!-- ABA: PORTFÓLIOS -->
-      <div class="aba" id="aba-portfolios">
+      <!-- PORTFÓLIOS -->
+      <div class="aba active" id="aba-portfolio">
         <div class="admin-header">
-          <div>
-            <h1>Gerenciar Portfólios</h1>
-            <p>Adicione, edite ou remova seus trabalhos</p>
-          </div>
-          <button class="btn-add" id="btnAddPortfolio">
-            <i class="fas fa-plus"></i> Novo Portfólio
-          </button>
+          <div><h1><i class="fas fa-images"></i> Portfólios</h1><p>Gerencie seus trabalhos</p></div>
+          <button class="btn-add" id="btnNovoPortfolio"><i class="fas fa-plus"></i> Novo Trabalho</button>
         </div>
-
-        <!-- FORM ADICIONAR/EDITAR -->
-        <div class="form-section" id="formSection" style="display:none">
-          <div class="form-card">
-            <div class="form-header">
-              <h3 id="formTitulo">➕ Novo Portfólio</h3>
-              <button class="btn-fechar-form" id="fecharForm">
-                <i class="fas fa-times"></i>
-              </button>
+        <div class="form-card" id="formPortfolio" style="display:none">
+          <div class="form-header">
+            <h3 id="formPortTitulo">➕ Novo Trabalho</h3>
+            <button class="btn-x" id="fecharFormPort"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label>📌 Título *</label>
+              <input type="text" id="pTitulo" placeholder="Ex: Logo para servidor HardPvP"/>
             </div>
-
-            <form id="portfolioForm">
-              <input type="hidden" id="editId"/>
-
-              <div class="form-grid">
-                <div class="field">
-                  <label>📌 Título da Arte *</label>
-                  <input type="text" id="fTitulo" placeholder="Ex: Logo para Servidor HardPvP" required/>
-                </div>
-
-                <div class="field">
-                  <label>📂 Categoria *</label>
-                  <select id="fCategoria" required>
-                    <option value="">Selecione...</option>
-                    <option value="logo">Logo</option>
-                    <option value="thumbnail">Thumbnail</option>
-                    <option value="banner">Banner</option>
-                    <option value="fotoperfil">Foto de Perfil</option>
-                    <option value="outro">Outro</option>
-                  </select>
-                </div>
-
-                <div class="field full">
-                  <label>📝 Descrição *</label>
-                  <textarea id="fDescricao" placeholder="Descreva brevemente a arte..." rows="3" required></textarea>
-                </div>
-
-                <div class="field full">
-                  <label>🖼️ URL da Imagem *</label>
-                  <input type="url" id="fImagem" placeholder="https://..." required/>
-                  <small>Cole o link direto da imagem (Imgur, Discord CDN, etc.)</small>
-                </div>
-
-                <!-- Preview da imagem -->
-                <div class="field full" id="previewContainer" style="display:none">
-                  <label>👁️ Preview</label>
-                  <img id="imgPreview" src="" alt="Preview" class="img-preview"/>
-                </div>
-
-                <div class="field">
-                  <label class="checkbox-label">
-                    <input type="checkbox" id="fDestaque"/>
-                    <span class="checkbox-custom"></span>
-                    ⭐ Marcar como Destaque
-                  </label>
-                </div>
+            <div class="field">
+              <label>📂 Categoria *</label>
+              <select id="pCategoria">
+                <option value="">Selecione...</option>
+                <option value="logo">Logo</option>
+                <option value="thumbnail">Thumbnail</option>
+                <option value="banner">Banner</option>
+                <option value="fotoperfil">Foto de Perfil</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label>📝 Descrição *</label>
+              <textarea id="pDescricao" rows="3" placeholder="Descreva a arte..."></textarea>
+            </div>
+            <div class="field full">
+              <label>🖼️ Imagem *</label>
+              <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Clique ou arraste a imagem aqui</p>
+                <small>PNG, JPG, WEBP até 5MB</small>
+                <input type="file" id="pImagem" accept="image/*" style="display:none"/>
               </div>
-
-              <div class="form-actions">
-                <button type="button" class="btn-cancelar" id="fecharForm2">Cancelar</button>
-                <button type="submit" class="btn-salvar">
-                  <i class="fas fa-save"></i> Salvar Portfólio
+              <div class="upload-preview" id="uploadPreview" style="display:none">
+                <img id="previewImg" src="" alt="Preview"/>
+                <button class="btn-remover-img" id="removerImg">
+                  <i class="fas fa-times"></i> Remover
                 </button>
               </div>
-            </form>
+              <div class="upload-progress" id="uploadProgress" style="display:none">
+                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                <span id="progressTxt">Enviando... 0%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label class="check-label">
+                <input type="checkbox" id="pDestaque"/>
+                <span class="check-box"></span>
+                ⭐ Marcar como Destaque
+              </label>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-cancel" id="fecharFormPort2">Cancelar</button>
+            <button class="btn-save" id="salvarPortfolio"><i class="fas fa-save"></i> Salvar</button>
           </div>
         </div>
-
-        <!-- RESULTADO JSON -->
-        <div class="json-result" id="jsonResult" style="display:none">
-          <div class="json-header">
-            <h3>✅ Dados Salvos! Agora copie o JSON abaixo:</h3>
-            <button class="btn-copiar" id="btnCopiarJson">
-              <i class="fas fa-copy"></i> Copiar JSON
-            </button>
-          </div>
-          <div class="json-instrucoes">
-            <p>📋 <strong>Como atualizar o site:</strong></p>
-            <ol>
-              <li>Copie todo o texto abaixo</li>
-              <li>Vá para o GitHub → repositório → arquivo <code>portfolios.json</code></li>
-              <li>Clique no ✏️ lápis para editar</li>
-              <li>Selecione tudo (Ctrl+A) e cole o novo conteúdo</li>
-              <li>Clique em <strong>"Commit changes"</strong></li>
-              <li>Aguarde 1-2 minutos e o site será atualizado!</li>
-            </ol>
-          </div>
-          <textarea id="jsonOutput" class="json-output" readonly></textarea>
-        </div>
-
-        <!-- LISTA DE PORTFÓLIOS -->
-        <div class="admin-lista" id="adminLista">
-          <!-- Preenchido pelo JS -->
+        <div class="portfolio-admin-grid" id="portfolioAdminGrid">
+          <div class="loading-admin"><div class="spinner"></div><p>Carregando...</p></div>
         </div>
       </div>
 
-      <!-- ABA: CONFIGURAÇÕES -->
-      <div class="aba" id="aba-config" style="display:none">
+      <!-- TEXTOS -->
+      <div class="aba" id="aba-textos" style="display:none">
         <div class="admin-header">
-          <div>
-            <h1>⚙️ Configurações do Site</h1>
-            <p>Edite informações gerais do site</p>
+          <div><h1><i class="fas fa-font"></i> Textos do Site</h1><p>Edite qualquer texto</p></div>
+        </div>
+        <div class="secoes-editor">
+          <div class="editor-card">
+            <div class="editor-card-header"><i class="fas fa-home"></i> Seção Inicial (Hero)</div>
+            <div class="form-grid">
+              <div class="field full"><label>🏷️ Nome do Site</label><input type="text" id="tNomeSite" placeholder="WilliamDesign"/><small>Aparece na navbar e footer</small></div>
+              <div class="field full"><label>🚀 Badge verde</label><input type="text" id="tHeroBadge"/></div>
+              <div class="field full"><label>📢 Título (parte 1)</label><input type="text" id="tHeroTitulo"/></div>
+              <div class="field full"><label>🎨 Título colorido</label><input type="text" id="tHeroDestaque"/></div>
+              <div class="field full"><label>📄 Subtítulo</label><textarea id="tHeroSub" rows="2"></textarea></div>
+              <div class="field"><label>🔘 Botão Portfólio</label><input type="text" id="tBtn1"/></div>
+              <div class="field"><label>🔘 Botão Solicitar</label><input type="text" id="tBtn2"/></div>
+              <div class="field full"><label>🔘 Botão Navbar</label><input type="text" id="tBtnNav"/></div>
+            </div>
+            <hr class="divider"/>
+            <p class="sub-label">📊 Estatísticas</p>
+            <div id="statsEditor"></div>
+            <button class="btn-add-small" id="addStat"><i class="fas fa-plus"></i> Adicionar</button>
+          </div>
+          <div class="editor-card">
+            <div class="editor-card-header"><i class="fas fa-concierge-bell"></i> Serviços</div>
+            <div class="form-grid">
+              <div class="field full"><label>🏷️ Tag</label><input type="text" id="tServTag"/></div>
+              <div class="field full"><label>📄 Subtítulo</label><input type="text" id="tServSub"/></div>
+            </div>
+          </div>
+          <div class="editor-card">
+            <div class="editor-card-header"><i class="fas fa-tags"></i> Preços</div>
+            <div class="form-grid">
+              <div class="field full"><label>📄 Subtítulo</label><input type="text" id="tPrecSub"/></div>
+              <div class="field full"><label>💡 Aviso combo</label><textarea id="tCombo" rows="2"></textarea></div>
+            </div>
+          </div>
+          <div class="editor-card">
+            <div class="editor-card-header"><i class="fas fa-headset"></i> Contato</div>
+            <div class="form-grid">
+              <div class="field full"><label>📄 Subtítulo</label><input type="text" id="tContSub"/></div>
+              <div class="field full"><label>💬 Descrição Discord</label><input type="text" id="tContDesc"/></div>
+            </div>
+          </div>
+          <div class="editor-card">
+            <div class="editor-card-header"><i class="fas fa-shoe-prints"></i> Footer</div>
+            <div class="form-grid">
+              <div class="field full"><label>📄 Descrição</label><input type="text" id="tFooterDesc"/></div>
+              <div class="field full"><label>©️ Copyright</label><input type="text" id="tFooterCopy"/></div>
+            </div>
           </div>
         </div>
+        <div class="save-bar">
+          <button class="btn-save-section" id="salvarTextos"><i class="fas fa-save"></i> Salvar Textos</button>
+        </div>
+      </div>
 
-        <div class="config-card">
-          <h3>Informações Gerais</h3>
+      <!-- SERVIÇOS -->
+      <div class="aba" id="aba-servicos" style="display:none">
+        <div class="admin-header">
+          <div><h1><i class="fas fa-concierge-bell"></i> Serviços</h1><p>Gerencie os cards de serviço</p></div>
+          <button class="btn-add" id="btnNovoServico"><i class="fas fa-plus"></i> Novo Serviço</button>
+        </div>
+        <div id="servicosAdminLista"></div>
+        <div class="save-bar">
+          <button class="btn-save-section" id="salvarServicos"><i class="fas fa-save"></i> Salvar Serviços</button>
+        </div>
+      </div>
+
+      <!-- PREÇOS -->
+      <div class="aba" id="aba-precos" style="display:none">
+        <div class="admin-header">
+          <div><h1><i class="fas fa-tags"></i> Preços</h1><p>Gerencie os cards de preço</p></div>
+          <button class="btn-add" id="btnNovoPreco"><i class="fas fa-plus"></i> Novo Preço</button>
+        </div>
+        <div id="precosAdminLista"></div>
+        <div class="save-bar">
+          <button class="btn-save-section" id="salvarPrecos"><i class="fas fa-save"></i> Salvar Preços</button>
+        </div>
+      </div>
+
+      <!-- CONTATO -->
+      <div class="aba" id="aba-contato" style="display:none">
+        <div class="admin-header">
+          <div><h1><i class="fas fa-headset"></i> Contato</h1><p>Configure suas informações</p></div>
+        </div>
+        <div class="editor-card">
+          <div class="editor-card-header"><i class="fab fa-discord"></i> Discord</div>
           <div class="form-grid">
             <div class="field full">
-              <label>👤 Seu Discord (username)</label>
-              <input type="text" id="cDiscord" placeholder="seuusuario" />
-              <small>Apenas o nome de usuário do Discord</small>
-            </div>
-            <div class="field">
-              <label>💰 Preço - Foto de Perfil</label>
-              <input type="text" id="cFotoPerfil" placeholder="R$ 5,50"/>
-            </div>
-            <div class="field">
-              <label>💰 Preço - Thumbnail</label>
-              <input type="text" id="cThumbnail" placeholder="R$ 4,00"/>
-            </div>
-            <div class="field">
-              <label>💰 Preço - Banner</label>
-              <input type="text" id="cBanner" placeholder="R$ 5,65"/>
-            </div>
-            <div class="field">
-              <label>💰 Preço - Logo</label>
-              <input type="text" id="cLogo" placeholder="R$ 6,00"/>
+              <label>👤 Username do Discord</label>
+              <input type="text" id="cDiscord" placeholder="seuusuario"/>
+              <small>Apenas o nome de usuário</small>
             </div>
           </div>
-          <button class="btn-salvar-config" id="btnSalvarConfig">
-            <i class="fas fa-save"></i> Gerar JSON com Configurações
-          </button>
+          <hr class="divider"/>
+          <p class="sub-label">ℹ️ Cards de informação</p>
+          <div id="infoItemsEditor"></div>
+          <button class="btn-add-small" id="addInfoItem"><i class="fas fa-plus"></i> Adicionar Item</button>
         </div>
-
-        <div class="json-result" id="jsonResultConfig" style="display:none">
-          <div class="json-header">
-            <h3>✅ JSON Gerado! Copie e cole no GitHub:</h3>
-            <button class="btn-copiar" id="btnCopiarConfig">
-              <i class="fas fa-copy"></i> Copiar
-            </button>
-          </div>
-          <textarea id="jsonOutputConfig" class="json-output" readonly></textarea>
+        <div class="save-bar">
+          <button class="btn-save-section" id="salvarContato"><i class="fas fa-save"></i> Salvar Contato</button>
         </div>
       </div>
 
-      <!-- ABA: INSTRUÇÕES -->
-      <div class="aba" id="aba-instrucoes" style="display:none">
+      <!-- APARÊNCIA -->
+      <div class="aba" id="aba-aparencia" style="display:none">
         <div class="admin-header">
-          <div>
-            <h1>📚 Como Usar</h1>
-            <p>Guia completo para gerenciar seu portfólio</p>
+          <div><h1><i class="fas fa-paint-brush"></i> Aparência</h1><p>Personalize cores e visual</p></div>
+        </div>
+        <div class="editor-card">
+          <div class="editor-card-header"><i class="fas fa-palette"></i> Cores</div>
+          <div class="form-grid">
+            <div class="field">
+              <label>🎨 Cor Primária</label>
+              <div class="color-input-wrap">
+                <input type="color" id="corPrimaria" value="#7c3aed"/>
+                <input type="text" id="corPrimariaHex" value="#7c3aed"/>
+              </div>
+              <small>Botões, destaques e gradiente esquerdo</small>
+            </div>
+            <div class="field">
+              <label>🎨 Cor Secundária</label>
+              <div class="color-input-wrap">
+                <input type="color" id="corSecundaria" value="#06b6d4"/>
+                <input type="text" id="corSecundariaHex" value="#06b6d4"/>
+              </div>
+              <small>Gradiente direito</small>
+            </div>
+            <div class="field">
+              <label>🌑 Fundo</label>
+              <div class="color-input-wrap">
+                <input type="color" id="corFundo" value="#0a0a0f"/>
+                <input type="text" id="corFundoHex" value="#0a0a0f"/>
+              </div>
+            </div>
+            <div class="field">
+              <label>📝 Texto</label>
+              <div class="color-input-wrap">
+                <input type="color" id="corTexto" value="#e2e8f0"/>
+                <input type="text" id="corTextoHex" value="#e2e8f0"/>
+              </div>
+            </div>
+          </div>
+          <div class="preview-cores">
+            <span>Preview:</span>
+            <div class="preview-btn" id="previewBtn">Botão Exemplo</div>
+            <div class="preview-text" id="previewText">Texto colorido</div>
           </div>
         </div>
-
-        <div class="instrucoes-grid">
-          <div class="instrucao-card">
-            <div class="instrucao-num">1</div>
-            <h3>Hospedar Imagens</h3>
-            <p>Use o <strong>Imgur</strong> (imgur.com) para hospedar suas imagens gratuitamente. Faça upload e copie o link direto da imagem.</p>
-            <a href="https://imgur.com/upload" target="_blank" class="instrucao-link">
-              <i class="fas fa-external-link-alt"></i> Acessar Imgur
-            </a>
+        <div class="editor-card">
+          <div class="editor-card-header"><i class="fas fa-icons"></i> Ícone do Logo</div>
+          <div class="form-grid">
+            <div class="field full">
+              <label>🎭 Emoji do Logo</label>
+              <input type="text" id="logoIcone" placeholder="🎨" maxlength="4"/>
+              <small>Use um emoji (ex: 🎨 ⚔️ 🖌️ 🎮)</small>
+            </div>
           </div>
-
-          <div class="instrucao-card">
-            <div class="instrucao-num">2</div>
-            <h3>Adicionar Portfólio</h3>
-            <p>Na aba "Portfólios", clique em <strong>"Novo Portfólio"</strong>, preencha os dados e salve. O JSON será gerado automaticamente.</p>
-          </div>
-
-          <div class="instrucao-card">
-            <div class="instrucao-num">3</div>
-            <h3>Atualizar o GitHub</h3>
-            <p>Copie o JSON gerado → vá ao GitHub → abra <strong>portfolios.json</strong> → clique no lápis ✏️ → cole o conteúdo → Commit changes.</p>
-          </div>
-
-          <div class="instrucao-card">
-            <div class="instrucao-num">4</div>
-            <h3>Aguardar Publicação</h3>
-            <p>Após salvar no GitHub, aguarde <strong>1 a 3 minutos</strong> e as alterações aparecerão no site automaticamente.</p>
-          </div>
-
-          <div class="instrucao-card">
-            <div class="instrucao-num">5</div>
-            <h3>Alterar Senha</h3>
-            <p>Para mudar a senha do painel admin, abra o arquivo <strong>admin.js</strong> no GitHub e edite a linha com <code>SENHA_ADMIN</code>.</p>
-          </div>
-
-          <div class="instrucao-card">
-            <div class="instrucao-num">6</div>
-            <h3>Link Discord no site</h3>
-            <p>Vá em <strong>Configurações</strong>, coloque seu username do Discord e gere o JSON. Atualize o portfolios.json no GitHub.</p>
-          </div>
+        </div>
+        <div class="save-bar">
+          <button class="btn-save-section" id="salvarAparencia"><i class="fas fa-save"></i> Salvar Aparência</button>
         </div>
       </div>
 
     </main>
   </div>
 
-  <script src="admin.js"></script>
+  <script type="module" src="admin.js"></script>
 </body>
 </html>
