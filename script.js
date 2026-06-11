@@ -1,342 +1,302 @@
-// ==========================================
-// WILLIAM ARTS - Script Principal
-// ==========================================
+import { supabase } from './supabase-config.js';
 
 let todosPortfolios = [];
-let filtroAtual = 'todos';
 
-// ------------------------------------------
-// INICIALIZAÇÃO
-// ------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
   criarParticulas();
-  carregarDados();
   setupNavbar();
   setupMenuMobile();
   setupModal();
   setupFiltros();
   setupScrollTop();
+  carregarSite();
   animarAoScroll();
 });
 
-// ------------------------------------------
-// CARREGAR DADOS DO JSON
-// ------------------------------------------
-async function carregarDados() {
-  try {
-    // Adiciona timestamp para evitar cache
-    const resp = await fetch(`portfolios.json?v=${Date.now()}`);
-    if (!resp.ok) throw new Error('Erro ao carregar dados');
-    const dados = await resp.json();
-
-    todosPortfolios = dados.portfolios || [];
-    const config = dados.config || {};
-
-    // Preenche discord
-    if (config.discord) {
-      document.getElementById('discordUsername').textContent = config.discord;
-      const btn = document.getElementById('btnDiscord');
-      if (btn) {
-        btn.onclick = () => {
-          alert(`Me chame no Discord: ${config.discord}`);
-        };
-      }
-    }
-
-    // Preenche preços
-    preencherPrecos(config.precos);
-
-    // Renderiza portfólios
-    renderizarPortfolios(todosPortfolios);
-
-  } catch (err) {
-    console.error('Erro:', err);
-    document.getElementById('portfolioGrid').innerHTML = `
-      <div class="portfolio-vazio">
-        <i class="fas fa-exclamation-triangle"></i>
-        <p>Erro ao carregar portfólios. Recarregue a página.</p>
-      </div>`;
-  }
+async function carregarSite() {
+  await Promise.all([
+    carregarConfig(),
+    carregarPortfolios(),
+    carregarServicos(),
+    carregarPrecos(),
+    carregarContato(),
+  ]);
 }
 
-// ------------------------------------------
-// PREENCHER PREÇOS
-// ------------------------------------------
-function preencherPrecos(precos) {
-  if (!precos) return;
-  const grid = document.getElementById('precosGrid');
-  if (!grid) return;
+async function carregarConfig() {
+  try {
+    const { data } = await supabase.from('site_config').select('*').eq('id','config').single();
+    if (!data) return;
 
-  const itens = [
-    { icon: '🖼️', nome: 'Foto de Perfil', valor: precos.fotoPerfil, obs: 'PNG com fundo transparente' },
-    { icon: '🎬', nome: 'Thumbnail', valor: precos.thumbnail, obs: 'Ideal para YouTube' },
-    { icon: '🖌️', nome: 'Banner', valor: precos.banner, obs: 'Para Discord e YouTube' },
-    { icon: '👑', nome: 'Logo', valor: precos.logo, obs: 'Identidade visual completa' },
-  ];
+    if (data.logo_icone) {
+      setText('logoIcone', data.logo_icone);
+      setText('footerIcone', data.logo_icone);
+    }
+    if (data.cor_primaria || data.cor_secundaria || data.cor_fundo || data.cor_texto) {
+      aplicarCores(data);
+    }
+    if (data.hero_badge) setText('heroBadge', data.hero_badge);
+    if (data.hero_titulo) setText('heroTitulo', data.hero_titulo);
+    if (data.hero_titulo_destaque) setText('heroTituloDestaque', data.hero_titulo_destaque);
+    if (data.hero_subtitulo) setText('heroSubtitulo', data.hero_subtitulo);
+    if (data.btn_portfolio) setText('btnVerPortfolio', data.btn_portfolio);
+    if (data.btn_solicitar) setText('btnSolicitarArte', data.btn_solicitar);
+    if (data.btn_nav) setText('navCtaTexto', data.btn_nav);
+    if (data.servicos_tag) setText('servicosTag', data.servicos_tag);
+    if (data.servicos_subtitulo) setText('servicosSubtitulo', data.servicos_subtitulo);
+    if (data.precos_subtitulo) setText('precosSubtitulo', data.precos_subtitulo);
+    if (data.combo_texto) document.getElementById('comboTexto').innerHTML = data.combo_texto;
+    if (data.contato_subtitulo) setText('contatoSubtitulo', data.contato_subtitulo);
+    if (data.contato_desc) setText('contatoDesc', data.contato_desc);
+    if (data.footer_desc) setText('footerDesc', data.footer_desc);
+    if (data.footer_copy) setText('footerCopy', data.footer_copy);
+    if (data.discord) {
+      setText('discordUser', data.discord);
+      document.getElementById('btnDiscord').onclick = () =>
+        window.open(`https://discord.com/users/${data.discord}`, '_blank');
+    }
 
-  grid.innerHTML = itens.map(item => `
-    <div class="preco-card">
-      <span class="preco-icon">${item.icon}</span>
-      <div class="preco-nome">${item.nome}</div>
-      <div class="preco-valor">${item.valor}</div>
-      <div class="preco-obs">${item.obs}</div>
+    await carregarStats();
+  } catch(e) { console.error(e); }
+}
+
+async function carregarStats() {
+  const { data } = await supabase.from('stats').select('*').order('ordem');
+  if (!data || !data.length) return;
+  const el = document.getElementById('heroStats');
+  if (!el) return;
+  el.innerHTML = data.map((s, i) => `
+    ${i > 0 ? '<div class="stat-divider"></div>' : ''}
+    <div class="stat">
+      <span class="stat-number">${s.numero}</span>
+      <span class="stat-label">${s.label}</span>
     </div>
   `).join('');
 }
 
-// ------------------------------------------
-// RENDERIZAR PORTFÓLIOS
-// ------------------------------------------
+function aplicarCores(data) {
+  const root = document.documentElement;
+  if (data.cor_primaria) root.style.setProperty('--primary', data.cor_primaria);
+  if (data.cor_secundaria) root.style.setProperty('--secondary', data.cor_secundaria);
+  if (data.cor_fundo) root.style.setProperty('--dark', data.cor_fundo);
+  if (data.cor_texto) root.style.setProperty('--text', data.cor_texto);
+  if (data.cor_primaria && data.cor_secundaria) {
+    root.style.setProperty('--gradient',
+      `linear-gradient(135deg,${data.cor_primaria},${data.cor_secundaria})`);
+  }
+}
+
+async function carregarPortfolios() {
+  const { data } = await supabase.from('portfolios').select('*').order('criado_em', { ascending: false });
+  todosPortfolios = data || [];
+  renderizarPortfolios(todosPortfolios);
+}
+
+async function carregarServicos() {
+  const { data } = await supabase.from('servicos').select('*').order('ordem');
+  const grid = document.getElementById('servicosGrid');
+  if (!grid) return;
+  if (!data || !data.length) { grid.innerHTML = ''; return; }
+
+  grid.innerHTML = data.map(s => `
+    <div class="servico-card ${s.destaque ? 'featured' : ''}">
+      ${s.destaque ? `<div class="featured-badge">${s.badge_texto || '⭐ Mais Popular'}</div>` : ''}
+      <div class="servico-icon" style="background:${s.cor}">
+        <i class="${s.icone}"></i>
+      </div>
+      <h3>${s.titulo}</h3>
+      <p>${s.descricao}</p>
+      <div class="servico-tags">
+        ${(s.tags || []).map(t =>
+          `<span class="tag ${t.destaque ? 'tag-destaque' : ''}">${t.texto}</span>`
+        ).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function carregarPrecos() {
+  const { data } = await supabase.from('precos').select('*').order('ordem');
+  const grid = document.getElementById('precosGrid');
+  if (!grid) return;
+  if (!data || !data.length) { grid.innerHTML = ''; return; }
+
+  grid.innerHTML = data.map(p => `
+    <div class="preco-card">
+      <span class="preco-icon">${p.icone}</span>
+      <div class="preco-nome">${p.nome}</div>
+      <div class="preco-valor">${p.valor}</div>
+      <div class="preco-obs">${p.obs}</div>
+    </div>
+  `).join('');
+}
+
+async function carregarContato() {
+  const { data } = await supabase.from('contato_info').select('*').order('ordem');
+  const el = document.getElementById('contatoInfo');
+  if (!el || !data || !data.length) return;
+
+  el.innerHTML = data.map(item => `
+    <div class="info-item">
+      <div class="info-icon">${item.icone}</div>
+      <div>
+        <h4>${item.titulo}</h4>
+        <p>${item.texto}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
 function renderizarPortfolios(lista) {
   const grid = document.getElementById('portfolioGrid');
   if (!grid) return;
-
-  if (lista.length === 0) {
-    grid.innerHTML = `
-      <div class="portfolio-vazio">
-        <i class="fas fa-images"></i>
-        <p>Nenhum trabalho encontrado nessa categoria.</p>
-      </div>`;
+  if (!lista.length) {
+    grid.innerHTML = `<div class="portfolio-vazio"><i class="fas fa-images"></i><p>Nenhum trabalho encontrado.</p></div>`;
     return;
   }
-
   grid.innerHTML = lista.map((item, idx) => {
-    const cor = getCategoriaColor(item.categoria);
+    const cor = getCatColor(item.categoria);
     return `
-      <div class="portfolio-item"
-           style="animation-delay: ${idx * 0.08}s"
+      <div class="portfolio-item" style="animation-delay:${idx*0.07}s"
            onclick="abrirModal(${item.id})">
-        ${item.destaque ? '<div class="portfolio-destaque-badge">⭐ Destaque</div>' : ''}
-        <div class="portfolio-img-container">
-          <img 
-            src="${item.imagem}" 
-            alt="${item.titulo}"
-            class="portfolio-img"
-            loading="lazy"
-            onerror="this.src='https://via.placeholder.com/600x400/1a1a26/7c3aed?text=Arte+Minecraft'"
-          />
+        ${item.destaque ? '<div class="p-destaque-badge">⭐ Destaque</div>' : ''}
+        <div class="portfolio-img-wrap">
+          <img src="${item.imagem}" alt="${item.titulo}" class="portfolio-img" loading="lazy"
+               onerror="this.src='https://via.placeholder.com/600x400/1a1a26/7c3aed?text=WilliamDesign'"/>
           <div class="portfolio-overlay">
-            <div class="overlay-icon">
-              <i class="fas fa-expand"></i>
-            </div>
+            <div class="overlay-icon"><i class="fas fa-expand"></i></div>
           </div>
         </div>
         <div class="portfolio-info">
           <h3>${item.titulo}</h3>
           <p>${item.descricao}</p>
-          <span class="portfolio-cat-badge" style="background: ${cor.bg}; color: ${cor.text}; border: 1px solid ${cor.border}">
-            ${formatarCategoria(item.categoria)}
+          <span class="p-cat-badge" style="background:${cor.bg};color:${cor.text};border:1px solid ${cor.border}">
+            ${formatCat(item.categoria)}
           </span>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 }
 
-// ------------------------------------------
-// CORES POR CATEGORIA
-// ------------------------------------------
-function getCategoriaColor(cat) {
-  const cores = {
-    logo: { bg: 'rgba(16,185,129,0.15)', text: '#10b981', border: 'rgba(16,185,129,0.3)' },
-    thumbnail: { bg: 'rgba(249,115,22,0.15)', text: '#f97316', border: 'rgba(249,115,22,0.3)' },
-    banner: { bg: 'rgba(6,182,212,0.15)', text: '#06b6d4', border: 'rgba(6,182,212,0.3)' },
-    fotoperfil: { bg: 'rgba(168,85,247,0.15)', text: '#a855f7', border: 'rgba(168,85,247,0.3)' },
-    outro: { bg: 'rgba(248,113,113,0.15)', text: '#f87171', border: 'rgba(248,113,113,0.3)' },
-  };
-  return cores[cat] || cores.outro;
-}
-
-function formatarCategoria(cat) {
-  const nomes = {
-    logo: 'Logo',
-    thumbnail: 'Thumbnail',
-    banner: 'Banner',
-    fotoperfil: 'Foto de Perfil',
-    outro: 'Outro',
-  };
-  return nomes[cat] || cat;
-}
-
-// ------------------------------------------
-// FILTROS
-// ------------------------------------------
 function setupFiltros() {
   document.querySelectorAll('.filtro-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      filtroAtual = btn.dataset.filtro;
-
-      const filtrado = filtroAtual === 'todos'
-        ? todosPortfolios
-        : todosPortfolios.filter(p => p.categoria === filtroAtual);
-
-      renderizarPortfolios(filtrado);
+      const f = btn.dataset.filtro;
+      renderizarPortfolios(f === 'todos' ? todosPortfolios : todosPortfolios.filter(p => p.categoria === f));
     });
   });
 }
 
-// ------------------------------------------
-// MODAL
-// ------------------------------------------
 function setupModal() {
-  const overlay = document.getElementById('modalOverlay');
-  const btnClose = document.getElementById('modalClose');
-
-  btnClose.addEventListener('click', fecharModal);
-  overlay.addEventListener('click', e => {
-    if (e.target === overlay) fecharModal();
+  document.getElementById('modalClose').addEventListener('click', fecharModal);
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay')) fecharModal();
   });
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') fecharModal();
-  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
 }
 
-function abrirModal(id) {
+window.abrirModal = function(id) {
   const item = todosPortfolios.find(p => p.id === id);
   if (!item) return;
-
   document.getElementById('modalImg').src = item.imagem;
-  document.getElementById('modalImg').alt = item.titulo;
   document.getElementById('modalTitulo').textContent = item.titulo;
   document.getElementById('modalDesc').textContent = item.descricao;
-  document.getElementById('modalCat').textContent = formatarCategoria(item.categoria);
-
+  document.getElementById('modalCat').textContent = formatCat(item.categoria);
   document.getElementById('modalOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
-}
+};
 
 function fecharModal() {
   document.getElementById('modalOverlay').classList.remove('open');
   document.body.style.overflow = '';
 }
 
-// ------------------------------------------
-// NAVBAR COM SCROLL
-// ------------------------------------------
 function setupNavbar() {
   const navbar = document.getElementById('navbar');
-  const links = document.querySelectorAll('.nav-link');
-
   window.addEventListener('scroll', () => {
-    if (window.scrollY > 50) {
-      navbar.classList.add('scrolled');
-    } else {
-      navbar.classList.remove('scrolled');
-    }
-
-    // Link ativo conforme scroll
+    navbar.classList.toggle('scrolled', window.scrollY > 50);
     const sections = document.querySelectorAll('section[id]');
     let atual = '';
-    sections.forEach(sec => {
-      if (window.scrollY >= sec.offsetTop - 120) {
-        atual = sec.getAttribute('id');
-      }
-    });
-
-    links.forEach(link => {
-      link.classList.toggle('active', link.getAttribute('href') === `#${atual}`);
+    sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) atual = s.id; });
+    document.querySelectorAll('.nav-link').forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === `#${atual}`);
     });
   });
 }
 
-// ------------------------------------------
-// MENU MOBILE
-// ------------------------------------------
 function setupMenuMobile() {
   const toggle = document.getElementById('menuToggle');
   const menu = document.getElementById('mobileMenu');
-
   toggle.addEventListener('click', () => {
     menu.classList.toggle('open');
-    const icon = toggle.querySelector('i');
-    icon.className = menu.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
+    toggle.querySelector('i').className = menu.classList.contains('open') ? 'fas fa-times' : 'fas fa-bars';
   });
-
-  document.querySelectorAll('.mobile-link').forEach(link => {
-    link.addEventListener('click', () => {
+  document.querySelectorAll('.mobile-link').forEach(l => {
+    l.addEventListener('click', () => {
       menu.classList.remove('open');
       toggle.querySelector('i').className = 'fas fa-bars';
     });
   });
 }
 
-// ------------------------------------------
-// SCROLL SUAVE
-// ------------------------------------------
-function scrollToSection(id) {
-  const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior: 'smooth' });
-}
+window.scrollToSection = function(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+};
 
-// ------------------------------------------
-// BOTÃO TOPO
-// ------------------------------------------
 function setupScrollTop() {
   const btn = document.getElementById('btnTopo');
-  window.addEventListener('scroll', () => {
-    btn.classList.toggle('visible', window.scrollY > 400);
-  });
+  window.addEventListener('scroll', () => btn.classList.toggle('visible', window.scrollY > 400));
 }
 
-// ------------------------------------------
-// ANIMAÇÃO AO SCROLL (Intersection Observer)
-// ------------------------------------------
 function animarAoScroll() {
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.style.opacity = '1';
-        entry.target.style.transform = 'translateY(0)';
-        observer.unobserve(entry.target);
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+        obs.unobserve(e.target);
       }
     });
   }, { threshold: 0.1 });
-
-  const animaveis = document.querySelectorAll(
-    '.servico-card, .preco-card, .info-item, .contato-card'
-  );
-
-  animaveis.forEach(el => {
+  document.querySelectorAll('.servico-card,.preco-card,.info-item,.contato-card').forEach(el => {
     el.style.opacity = '0';
-    el.style.transform = 'translateY(30px)';
-    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-    observer.observe(el);
+    el.style.transform = 'translateY(28px)';
+    el.style.transition = 'opacity 0.55s ease, transform 0.55s ease';
+    obs.observe(el);
   });
 }
 
-// ------------------------------------------
-// PARTÍCULAS DE FUNDO
-// ------------------------------------------
 function criarParticulas() {
   const container = document.getElementById('particles');
   if (!container) return;
-
-  const cores = ['#7c3aed', '#06b6d4', '#f97316', '#10b981', '#a855f7'];
-  const qtd = window.innerWidth > 768 ? 25 : 12;
-
+  const cores = ['#7c3aed','#06b6d4','#f97316','#10b981','#a855f7'];
+  const qtd = window.innerWidth > 768 ? 22 : 10;
   for (let i = 0; i < qtd; i++) {
     const p = document.createElement('div');
     p.classList.add('particle');
-
     const size = Math.random() * 4 + 2;
     const cor = cores[Math.floor(Math.random() * cores.length)];
-    const left = Math.random() * 100;
-    const duration = Math.random() * 15 + 10;
-    const delay = Math.random() * 10;
-
-    p.style.cssText = `
-      width: ${size}px;
-      height: ${size}px;
-      left: ${left}%;
-      background: ${cor};
-      animation-duration: ${duration}s;
-      animation-delay: ${delay}s;
-      box-shadow: 0 0 ${size * 3}px ${cor};
-    `;
-
+    p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;background:${cor};animation-duration:${Math.random()*15+10}s;animation-delay:${Math.random()*10}s;box-shadow:0 0 ${size*3}px ${cor}`;
     container.appendChild(p);
   }
+}
+
+function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+
+function getCatColor(cat) {
+  const c = {
+    logo:{bg:'rgba(16,185,129,0.15)',text:'#10b981',border:'rgba(16,185,129,0.3)'},
+    thumbnail:{bg:'rgba(249,115,22,0.15)',text:'#f97316',border:'rgba(249,115,22,0.3)'},
+    banner:{bg:'rgba(6,182,212,0.15)',text:'#06b6d4',border:'rgba(6,182,212,0.3)'},
+    fotoperfil:{bg:'rgba(168,85,247,0.15)',text:'#a855f7',border:'rgba(168,85,247,0.3)'},
+    outro:{bg:'rgba(248,113,113,0.15)',text:'#f87171',border:'rgba(248,113,113,0.3)'},
+  };
+  return c[cat] || c.outro;
+}
+
+function formatCat(cat) {
+  const n = {logo:'Logo',thumbnail:'Thumbnail',banner:'Banner',fotoperfil:'Foto de Perfil',outro:'Outro'};
+  return n[cat] || cat;
 }
