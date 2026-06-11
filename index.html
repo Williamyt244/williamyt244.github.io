@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>William Arts | Design para Minecraft</title>
+  <meta name="description" content="Artes profissionais para servidores e canais de Minecraft. Logos, thumbnails, banners e muito mais!"/>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+  <!-- PARTÍCULAS DE FUNDO -->
+  <div class="particles" id="particles"></div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <div class="nav-logo">
+        <span class="logo-icon">⚔️</span>
+        <span class="logo-text">William<span class="logo-highlight">Arts</span></span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#inicio" class="nav-link active">Início</a></li>
+        <li><a href="#servicos" class="nav-link">Serviços</a></li>
+        <li><a href="#precos" class="nav-link">Preços</a></li>
+        <li><a href="#portfolio" class="nav-link">Portfólio</a></li>
+        <li><a href="#contato" class="nav-link">Contato</a></li>
+      </ul>
+      <button class="nav-cta" onclick="scrollToSection('contato')">
+        <i class="fab fa-discord"></i> Contratar
+      </button>
+      <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <!-- Menu Mobile -->
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#inicio" class="mobile-link">Início</a>
+      <a href="#servicos" class="mobile-link">Serviços</a>
+      <a href="#precos" class="mobile-link">Preços</a>
+      <a href="#portfolio" class="mobile-link">Portfólio</a>
+      <a href="#contato" class="mobile-link">Contato</a>
+    </div>
+  </nav>
+
+  <!-- HERO SECTION -->
+  <section class="hero" id="inicio">
+    <div class="hero-bg-grid"></div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        🚀 Designer de Minecraft disponível
+      </div>
+      <h1 class="hero-title">
+        Eleve o Visual do seu
+        <span class="gradient-text">Servidor Minecraft</span>
+        ao Próximo Nível
+      </h1>
+      <p class="hero-subtitle">
+        Crio artes profissionais para servidores e canais de Minecraft.
+        Logos, thumbnails, banners e muito mais com preços acessíveis!
+      </p>
+      <div class="hero-buttons">
+        <button class="btn-primary" onclick="scrollToSection('portfolio')">
+          <i class="fas fa-images"></i> Ver Portfólio
+        </button>
+        <button class="btn-secondary" onclick="scrollToSection('contato')">
+          <i class="fab fa-discord"></i> Solicitar Arte
+        </button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-number">100%</span>
+          <span class="stat-label">Satisfação</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-number">48h</span>
+          <span class="stat-label">Entrega Rápida</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-number">10%</span>
+          <span class="stat-label">Desconto Combo</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-card-float card-1">
+        <i class="fas fa-palette"></i>
+        <span>Logo Profissional</span>
+      </div>
+      <div class="hero-card-float card-2">
+        <i class="fas fa-image"></i>
+        <span>Thumbnail HD</span>
+      </div>
+      <div class="hero-card-float card-3">
+        <i class="fas fa-star"></i>
+        <span>Alta Qualidade</span>
+      </div>
+      <div class="minecraft-block">
+        <div class="block-face top"></div>
+        <div class="block-face front"></div>
+        <div class="block-face right"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVIÇOS -->
+  <section class="servicos" id="servicos">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">📸 O que ofereço</span>
+        <h2 class="section-title">Meus <span class="gradient-text">Serviços</span></h2>
+        <p class="section-subtitle">Tudo que você precisa para ter um visual profissional no Minecraft</p>
+      </div>
+      <div class="servicos-grid">
+
+        <div class="servico-card">
+          <div class="servico-icon" style="background: linear-gradient(135deg, #7c3aed, #a855f7);">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <h3>Foto de Perfil</h3>
+          <p>Avatar personalizado com seu personagem Minecraft em estilo profissional e único.</p>
+          <div class="servico-tags">
+            <span class="tag">PNG</span>
+            <span class="tag">Alta Res</span>
+            <span class="tag">Skin</span>
+          </div>
+        </div>
+
+        <div class="servico-card featured">
+          <div class="featured-badge">⭐ Mais Popular</div>
+          <div class="servico-icon" style="background: linear-gradient(135deg, #dc2626, #f97316);">
+            <i class="fas fa-film"></i>
+          </div>
+          <h3>Thumbnail</h3>
+          <p>Thumbnails chamativas para YouTube que aumentam seus cliques e visualizações.</p>
+          <div class="servico-tags">
+            <span class="tag">YouTube</span>
+            <span class="tag">1920x1080</span>
+            <span class="tag">CTR Alto</span>
+          </div>
+        </div>
+
+        <div class="servico-card">
+          <div class="servico-icon" style="background: linear-gradient(135deg, #1d4ed8, #06b6d4);">
+            <i class="fas fa-panorama"></i>
+          </div>
+          <h3>Banner</h3>
+          <p>Banners para Discord, YouTube e redes sociais que transmitem profissionalismo.</p>
+          <div class="servico-tags">
+            <span class="tag">Discord</span>
+            <span class="tag">YouTube</span>
+            <span class="tag">Banner</span>
+          </div>
+        </div>
+
+        <div class="servico-card">
+          <div class="servico-icon" style="background: linear-gradient(135deg, #065f46, #10b981);">
+            <i class="fas fa-crown"></i>
+          </div>
+          <h3>Logo</h3>
+          <p>Identidade visual completa para seu servidor ou canal com logo exclusiva.</p>
+          <div class="servico-tags">
+            <span class="tag">SVG</span>
+            <span class="tag">PNG</span>
+            <span class="tag">Exclusivo</span>
+          </div>
+        </div>
+
+        <div class="servico-card">
+          <div class="servico-icon" style="background: linear-gradient(135deg, #b45309, #f59e0b);">
+            <i class="fas fa-magic"></i>
+          </div>
+          <h3>Arte Personalizada</h3>
+          <p>Tem uma ideia diferente? Entre em contato e criamos juntos a arte perfeita para você.</p>
+          <div class="servico-tags">
+            <span class="tag">Customizado</span>
+            <span class="tag">Sob Medida</span>
+          </div>
+        </div>
+
+        <div class="servico-card desconto-card">
+          <div class="servico-icon" style="background: linear-gradient(135deg, #be185d, #ec4899);">
+            <i class="fas fa-tags"></i>
+          </div>
+          <h3>Combo com Desconto</h3>
+          <p>Combine dois ou mais serviços e ganhe <strong>10% de desconto</strong> no valor total!</p>
+          <div class="servico-tags">
+            <span class="tag tag-destaque">10% OFF</span>
+            <span class="tag">Combo</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- PREÇOS -->
+  <section class="precos" id="precos">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">💵 Investimento</span>
+        <h2 class="section-title">Preços <span class="gradient-text">Acessíveis</span></h2>
+        <p class="section-subtitle">Qualidade profissional sem pesar no bolso</p>
+      </div>
+      <div class="precos-grid" id="precosGrid">
+        <!-- Preenchido pelo JS -->
+      </div>
+      <div class="combo-aviso">
+        <i class="fas fa-info-circle"></i>
+        <p><strong>Dica:</strong> Combine serviços e ganhe <span class="highlight">10% de desconto</span> no total!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PORTFÓLIO -->
+  <section class="portfolio-section" id="portfolio">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">📁 Meus Trabalhos</span>
+        <h2 class="section-title">Port<span class="gradient-text">fólio</span></h2>
+        <p class="section-subtitle">Confira alguns exemplos do meu trabalho</p>
+      </div>
+
+      <!-- FILTROS -->
+      <div class="filtros">
+        <button class="filtro-btn active" data-filtro="todos">Todos</button>
+        <button class="filtro-btn" data-filtro="logo">Logos</button>
+        <button class="filtro-btn" data-filtro="thumbnail">Thumbnails</button>
+        <button class="filtro-btn" data-filtro="banner">Banners</button>
+        <button class="filtro-btn" data-filtro="fotoperfil">Foto de Perfil</button>
+        <button class="filtro-btn" data-filtro="outro">Outros</button>
+      </div>
+
+      <!-- GRID DE PORTFÓLIOS -->
+      <div class="portfolio-grid" id="portfolioGrid">
+        <div class="loading-portfolio">
+          <div class="spinner"></div>
+          <p>Carregando trabalhos...</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CONTATO -->
+  <section class="contato" id="contato">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">📩 Fale comigo</span>
+        <h2 class="section-title">Vamos <span class="gradient-text">Trabalhar</span> Juntos?</h2>
+        <p class="section-subtitle">Me chame no Discord para solicitar um orçamento ou tirar dúvidas!</p>
+      </div>
+      <div class="contato-content">
+        <div class="contato-card discord-card">
+          <div class="discord-icon">
+            <i class="fab fa-discord"></i>
+          </div>
+          <h3>Discord</h3>
+          <p>A forma mais rápida de me contatar. Me chame no privado!</p>
+          <div class="discord-username" id="discordUsername">
+            <!-- Preenchido pelo JS -->
+          </div>
+          <button class="btn-discord" id="btnDiscord">
+            <i class="fab fa-discord"></i> Abrir Discord
+          </button>
+        </div>
+
+        <div class="contato-info">
+          <div class="info-item">
+            <div class="info-icon">⚡</div>
+            <div>
+              <h4>Resposta Rápida</h4>
+              <p>Costumo responder em menos de 24 horas</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon">🎨</div>
+            <div>
+              <h4>Revisões Incluídas</h4>
+              <p>Ajustes até você ficar 100% satisfeito</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon">🔒</div>
+            <div>
+              <h4>Pagamento Seguro</h4>
+              <p>Pague somente após aprovar o resultado</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon">📦</div>
+            <div>
+              <h4>Entrega em Alta Qualidade</h4>
+              <p>Arquivos em PNG, com fundo transparente quando necessário</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-logo">
+        <span class="logo-icon">⚔️</span>
+        <span class="logo-text">William<span class="logo-highlight">Arts</span></span>
+      </div>
+      <p class="footer-desc">Design profissional para o universo Minecraft</p>
+      <div class="footer-links">
+        <a href="#inicio">Início</a>
+        <a href="#servicos">Serviços</a>
+        <a href="#portfolio">Portfólio</a>
+        <a href="#contato">Contato</a>
+      </div>
+      <p class="footer-copy">© 2024 WilliamArts. Feito com ❤️ para a comunidade Minecraft.</p>
+    </div>
+  </footer>
+
+  <!-- MODAL DE IMAGEM -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+      <button class="modal-close" id="modalClose">
+        <i class="fas fa-times"></i>
+      </button>
+      <img src="" alt="" id="modalImg" class="modal-img"/>
+      <div class="modal-info">
+        <h3 id="modalTitulo"></h3>
+        <p id="modalDesc"></p>
+        <span class="modal-cat" id="modalCat"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTÃO VOLTAR AO TOPO -->
+  <button class="btn-topo" id="btnTopo" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <script src="script.js"></script>
+</body>
+</html>
