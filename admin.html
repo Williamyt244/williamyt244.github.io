@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - WilliamArts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="admin.css"/>
+</head>
+<body>
+
+  <!-- TELA DE LOGIN -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="login-logo">⚔️ <span>William<span class="hl">Arts</span></span></div>
+      <h2>Painel Administrativo</h2>
+      <p>Apenas o dono pode acessar esta área</p>
+      <form id="loginForm">
+        <div class="input-group">
+          <label>Senha</label>
+          <div class="input-wrap">
+            <i class="fas fa-lock"></i>
+            <input type="password" id="senhaInput" placeholder="Digite sua senha..." required/>
+            <button type="button" class="eye-btn" id="eyeBtn">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div class="error-msg" id="erroLogin">❌ Senha incorreta!</div>
+        <button type="submit" class="btn-login">
+          <i class="fas fa-sign-in-alt"></i> Entrar
+        </button>
+      </form>
+      <a href="index.html" class="back-link">← Voltar ao site</a>
+    </div>
+  </div>
+
+  <!-- PAINEL ADMIN -->
+  <div class="admin-panel" id="adminPanel" style="display:none">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">⚔️ <span>Admin<span class="hl">Panel</span></span></div>
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-aba="portfolios">
+          <i class="fas fa-images"></i> Portfólios
+        </button>
+        <button class="nav-btn" data-aba="config">
+          <i class="fas fa-cog"></i> Configurações
+        </button>
+        <button class="nav-btn" data-aba="instrucoes">
+          <i class="fas fa-book"></i> Instruções
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="index.html" target="_blank" class="ver-site-btn">
+          <i class="fas fa-external-link-alt"></i> Ver Site
+        </a>
+        <button class="logout-btn" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i> Sair
+        </button>
+      </div>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="admin-main">
+
+      <!-- ABA: PORTFÓLIOS -->
+      <div class="aba" id="aba-portfolios">
+        <div class="admin-header">
+          <div>
+            <h1>Gerenciar Portfólios</h1>
+            <p>Adicione, edite ou remova seus trabalhos</p>
+          </div>
+          <button class="btn-add" id="btnAddPortfolio">
+            <i class="fas fa-plus"></i> Novo Portfólio
+          </button>
+        </div>
+
+        <!-- FORM ADICIONAR/EDITAR -->
+        <div class="form-section" id="formSection" style="display:none">
+          <div class="form-card">
+            <div class="form-header">
+              <h3 id="formTitulo">➕ Novo Portfólio</h3>
+              <button class="btn-fechar-form" id="fecharForm">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            <form id="portfolioForm">
+              <input type="hidden" id="editId"/>
+
+              <div class="form-grid">
+                <div class="field">
+                  <label>📌 Título da Arte *</label>
+                  <input type="text" id="fTitulo" placeholder="Ex: Logo para Servidor HardPvP" required/>
+                </div>
+
+                <div class="field">
+                  <label>📂 Categoria *</label>
+                  <select id="fCategoria" required>
+                    <option value="">Selecione...</option>
+                    <option value="logo">Logo</option>
+                    <option value="thumbnail">Thumbnail</option>
+                    <option value="banner">Banner</option>
+                    <option value="fotoperfil">Foto de Perfil</option>
+                    <option value="outro">Outro</option>
+                  </select>
+                </div>
+
+                <div class="field full">
+                  <label>📝 Descrição *</label>
+                  <textarea id="fDescricao" placeholder="Descreva brevemente a arte..." rows="3" required></textarea>
+                </div>
+
+                <div class="field full">
+                  <label>🖼️ URL da Imagem *</label>
+                  <input type="url" id="fImagem" placeholder="https://..." required/>
+                  <small>Cole o link direto da imagem (Imgur, Discord CDN, etc.)</small>
+                </div>
+
+                <!-- Preview da imagem -->
+                <div class="field full" id="previewContainer" style="display:none">
+                  <label>👁️ Preview</label>
+                  <img id="imgPreview" src="" alt="Preview" class="img-preview"/>
+                </div>
+
+                <div class="field">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="fDestaque"/>
+                    <span class="checkbox-custom"></span>
+                    ⭐ Marcar como Destaque
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn-cancelar" id="fecharForm2">Cancelar</button>
+                <button type="submit" class="btn-salvar">
+                  <i class="fas fa-save"></i> Salvar Portfólio
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- RESULTADO JSON -->
+        <div class="json-result" id="jsonResult" style="display:none">
+          <div class="json-header">
+            <h3>✅ Dados Salvos! Agora copie o JSON abaixo:</h3>
+            <button class="btn-copiar" id="btnCopiarJson">
+              <i class="fas fa-copy"></i> Copiar JSON
+            </button>
+          </div>
+          <div class="json-instrucoes">
+            <p>📋 <strong>Como atualizar o site:</strong></p>
+            <ol>
+              <li>Copie todo o texto abaixo</li>
+              <li>Vá para o GitHub → repositório → arquivo <code>portfolios.json</code></li>
+              <li>Clique no ✏️ lápis para editar</li>
+              <li>Selecione tudo (Ctrl+A) e cole o novo conteúdo</li>
+              <li>Clique em <strong>"Commit changes"</strong></li>
+              <li>Aguarde 1-2 minutos e o site será atualizado!</li>
+            </ol>
+          </div>
+          <textarea id="jsonOutput" class="json-output" readonly></textarea>
+        </div>
+
+        <!-- LISTA DE PORTFÓLIOS -->
+        <div class="admin-lista" id="adminLista">
+          <!-- Preenchido pelo JS -->
+        </div>
+      </div>
+
+      <!-- ABA: CONFIGURAÇÕES -->
+      <div class="aba" id="aba-config" style="display:none">
+        <div class="admin-header">
+          <div>
+            <h1>⚙️ Configurações do Site</h1>
+            <p>Edite informações gerais do site</p>
+          </div>
+        </div>
+
+        <div class="config-card">
+          <h3>Informações Gerais</h3>
+          <div class="form-grid">
+            <div class="field full">
+              <label>👤 Seu Discord (username)</label>
+              <input type="text" id="cDiscord" placeholder="seuusuario" />
+              <small>Apenas o nome de usuário do Discord</small>
+            </div>
+            <div class="field">
+              <label>💰 Preço - Foto de Perfil</label>
+              <input type="text" id="cFotoPerfil" placeholder="R$ 5,50"/>
+            </div>
+            <div class="field">
+              <label>💰 Preço - Thumbnail</label>
+              <input type="text" id="cThumbnail" placeholder="R$ 4,00"/>
+            </div>
+            <div class="field">
+              <label>💰 Preço - Banner</label>
+              <input type="text" id="cBanner" placeholder="R$ 5,65"/>
+            </div>
+            <div class="field">
+              <label>💰 Preço - Logo</label>
+              <input type="text" id="cLogo" placeholder="R$ 6,00"/>
+            </div>
+          </div>
+          <button class="btn-salvar-config" id="btnSalvarConfig">
+            <i class="fas fa-save"></i> Gerar JSON com Configurações
+          </button>
+        </div>
+
+        <div class="json-result" id="jsonResultConfig" style="display:none">
+          <div class="json-header">
+            <h3>✅ JSON Gerado! Copie e cole no GitHub:</h3>
+            <button class="btn-copiar" id="btnCopiarConfig">
+              <i class="fas fa-copy"></i> Copiar
+            </button>
+          </div>
+          <textarea id="jsonOutputConfig" class="json-output" readonly></textarea>
+        </div>
+      </div>
+
+      <!-- ABA: INSTRUÇÕES -->
+      <div class="aba" id="aba-instrucoes" style="display:none">
+        <div class="admin-header">
+          <div>
+            <h1>📚 Como Usar</h1>
+            <p>Guia completo para gerenciar seu portfólio</p>
+          </div>
+        </div>
+
+        <div class="instrucoes-grid">
+          <div class="instrucao-card">
+            <div class="instrucao-num">1</div>
+            <h3>Hospedar Imagens</h3>
+            <p>Use o <strong>Imgur</strong> (imgur.com) para hospedar suas imagens gratuitamente. Faça upload e copie o link direto da imagem.</p>
+            <a href="https://imgur.com/upload" target="_blank" class="instrucao-link">
+              <i class="fas fa-external-link-alt"></i> Acessar Imgur
+            </a>
+          </div>
+
+          <div class="instrucao-card">
+            <div class="instrucao-num">2</div>
+            <h3>Adicionar Portfólio</h3>
+            <p>Na aba "Portfólios", clique em <strong>"Novo Portfólio"</strong>, preencha os dados e salve. O JSON será gerado automaticamente.</p>
+          </div>
+
+          <div class="instrucao-card">
+            <div class="instrucao-num">3</div>
+            <h3>Atualizar o GitHub</h3>
+            <p>Copie o JSON gerado → vá ao GitHub → abra <strong>portfolios.json</strong> → clique no lápis ✏️ → cole o conteúdo → Commit changes.</p>
+          </div>
+
+          <div class="instrucao-card">
+            <div class="instrucao-num">4</div>
+            <h3>Aguardar Publicação</h3>
+            <p>Após salvar no GitHub, aguarde <strong>1 a 3 minutos</strong> e as alterações aparecerão no site automaticamente.</p>
+          </div>
+
+          <div class="instrucao-card">
+            <div class="instrucao-num">5</div>
+            <h3>Alterar Senha</h3>
+            <p>Para mudar a senha do painel admin, abra o arquivo <strong>admin.js</strong> no GitHub e edite a linha com <code>SENHA_ADMIN</code>.</p>
+          </div>
+
+          <div class="instrucao-card">
+            <div class="instrucao-num">6</div>
+            <h3>Link Discord no site</h3>
+            <p>Vá em <strong>Configurações</strong>, coloque seu username do Discord e gere o JSON. Atualize o portfolios.json no GitHub.</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
