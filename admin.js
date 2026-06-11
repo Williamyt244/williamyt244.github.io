@@ -1,5 +1,8 @@
 import { supabase } from './supabase-config.js';
 
+// ==========================================
+// ESTADO GLOBAL
+// ==========================================
 let portfolios = [];
 let servicosLista = [];
 let precosLista = [];
@@ -10,16 +13,23 @@ let idEdicao = null;
 let imagemFile = null;
 let imagemUrlAtual = '';
 let imagemPathAtual = '';
+let adminIniciado = false; // ← EVITA INICIALIZAR DUAS VEZES
 
+// ==========================================
 // AUTH
+// ==========================================
 supabase.auth.onAuthStateChange((event, session) => {
   if (session) {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'flex';
-    inicializarAdmin();
+    if (!adminIniciado) {
+      adminIniciado = true;
+      inicializarAdmin();
+    }
   } else {
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('adminPanel').style.display = 'none';
+    adminIniciado = false;
   }
 });
 
@@ -49,10 +59,23 @@ document.getElementById('eyeBtn').addEventListener('click', () => {
     input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
 });
 
-document.getElementById('logoutBtn').addEventListener('click', () => supabase.auth.signOut());
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  adminIniciado = false;
+  supabase.auth.signOut();
+});
 
+// ==========================================
+// INICIALIZAR
+// ==========================================
 async function inicializarAdmin() {
   setupAbas();
+  setupPortfolioForm();
+  setupBotoesServicos();
+  setupBotoesPrecos();
+  setupBotoesContato();
+  setupAparencia();
+  setupSalvarTextos();
+
   await Promise.all([
     carregarPortfoliosAdmin(),
     carregarTextosAdmin(),
@@ -61,15 +84,11 @@ async function inicializarAdmin() {
     carregarContatoAdmin(),
     carregarAparenciaAdmin(),
   ]);
-  setupPortfolioForm();
-  setupSalvarTextos();
-  setupServicos();
-  setupPrecos();
-  setupContato();
-  setupAparencia();
 }
 
+// ==========================================
 // ABAS
+// ==========================================
 function setupAbas() {
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -96,7 +115,11 @@ async function carregarPortfoliosAdmin() {
 function renderizarPortfoliosAdmin() {
   const grid = document.getElementById('portfolioAdminGrid');
   if (!portfolios.length) {
-    grid.innerHTML = `<div class="admin-vazio"><i class="fas fa-images"></i><p>Nenhum trabalho. Clique em "Novo Trabalho"!</p></div>`;
+    grid.innerHTML = `
+      <div class="admin-vazio">
+        <i class="fas fa-images"></i>
+        <p>Nenhum trabalho. Clique em "Novo Trabalho"!</p>
+      </div>`;
     return;
   }
   grid.innerHTML = portfolios.map(item => `
@@ -125,7 +148,8 @@ function setupPortfolioForm() {
   const inputFile = document.getElementById('pImagem');
 
   document.getElementById('btnNovoPortfolio').addEventListener('click', () => {
-    modoEdicao = false; idEdicao = null;
+    modoEdicao = false;
+    idEdicao = null;
     limparFormPortfolio();
     document.getElementById('formPortTitulo').textContent = '➕ Novo Trabalho';
     form.style.display = 'block';
@@ -141,7 +165,9 @@ function setupPortfolioForm() {
     e.preventDefault();
     uploadArea.style.borderColor = '#7c3aed';
   });
-  uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = ''; });
+  uploadArea.addEventListener('dragleave', () => {
+    uploadArea.style.borderColor = '';
+  });
   uploadArea.addEventListener('drop', e => {
     e.preventDefault();
     uploadArea.style.borderColor = '';
@@ -150,14 +176,13 @@ function setupPortfolioForm() {
   inputFile.addEventListener('change', () => {
     if (inputFile.files[0]) selecionarImagem(inputFile.files[0]);
   });
-
   document.getElementById('removerImg').addEventListener('click', () => {
-    imagemFile = null; imagemUrlAtual = '';
+    imagemFile = null;
+    imagemUrlAtual = '';
     document.getElementById('uploadPreview').style.display = 'none';
     document.getElementById('uploadArea').style.display = 'flex';
     inputFile.value = '';
   });
-
   document.getElementById('salvarPortfolio').addEventListener('click', salvarPortfolio);
 }
 
@@ -174,14 +199,17 @@ function selecionarImagem(file) {
 }
 
 function limparFormPortfolio() {
-  ['pTitulo', 'pDescricao'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('pTitulo').value = '';
+  document.getElementById('pDescricao').value = '';
   document.getElementById('pCategoria').value = '';
   document.getElementById('pDestaque').checked = false;
   document.getElementById('uploadPreview').style.display = 'none';
   document.getElementById('uploadArea').style.display = 'flex';
   document.getElementById('uploadProgress').style.display = 'none';
   document.getElementById('pImagem').value = '';
-  imagemFile = null; imagemUrlAtual = ''; imagemPathAtual = '';
+  imagemFile = null;
+  imagemUrlAtual = '';
+  imagemPathAtual = '';
 }
 
 async function salvarPortfolio() {
@@ -190,8 +218,12 @@ async function salvarPortfolio() {
   const descricao = document.getElementById('pDescricao').value.trim();
   const destaque = document.getElementById('pDestaque').checked;
 
-  if (!titulo || !categoria || !descricao) { notif('❌ Preencha todos os campos!', 'erro'); return; }
-  if (!imagemFile && !imagemUrlAtual) { notif('❌ Selecione uma imagem!', 'erro'); return; }
+  if (!titulo || !categoria || !descricao) {
+    notif('❌ Preencha todos os campos!', 'erro'); return;
+  }
+  if (!imagemFile && !imagemUrlAtual) {
+    notif('❌ Selecione uma imagem!', 'erro'); return;
+  }
 
   const btn = document.getElementById('salvarPortfolio');
   btn.disabled = true;
@@ -209,29 +241,35 @@ async function salvarPortfolio() {
       const { error: upErr } = await supabase.storage
         .from('portfolios')
         .upload(imagemPath, imagemFile, { upsert: true });
-
       if (upErr) throw upErr;
 
       document.getElementById('progressFill').style.width = '100%';
       document.getElementById('progressTxt').textContent = 'Concluído!';
 
-      const { data: urlData } = supabase.storage.from('portfolios').getPublicUrl(imagemPath);
+      const { data: urlData } = supabase.storage
+        .from('portfolios')
+        .getPublicUrl(imagemPath);
       imagemUrl = urlData.publicUrl;
     }
 
-    const dados = { titulo, categoria, descricao, destaque, imagem: imagemUrl, imagem_path: imagemPath };
+    const dados = {
+      titulo, categoria, descricao, destaque,
+      imagem: imagemUrl, imagem_path: imagemPath
+    };
 
     if (modoEdicao && idEdicao) {
-      const { error } = await supabase.from('portfolios').update(dados).eq('id', idEdicao);
+      const { error } = await supabase
+        .from('portfolios').update(dados).eq('id', idEdicao);
       if (error) throw error;
       notif('✅ Trabalho atualizado!');
     } else {
-      const { error } = await supabase.from('portfolios').insert(dados);
+      const { error } = await supabase
+        .from('portfolios').insert(dados);
       if (error) throw error;
       notif('✅ Trabalho adicionado!');
     }
 
-    form.style.display = 'none';
+    document.getElementById('formPortfolio').style.display = 'none';
     limparFormPortfolio();
     await carregarPortfoliosAdmin();
   } catch(e) {
@@ -247,10 +285,10 @@ async function salvarPortfolio() {
 window.editarPortfolio = function(id) {
   const item = portfolios.find(p => p.id === id);
   if (!item) return;
-  modoEdicao = true; idEdicao = id;
+  modoEdicao = true;
+  idEdicao = id;
   imagemUrlAtual = item.imagem;
   imagemPathAtual = item.imagem_path || '';
-
   document.getElementById('pTitulo').value = item.titulo;
   document.getElementById('pCategoria').value = item.categoria;
   document.getElementById('pDescricao').value = item.descricao;
@@ -259,7 +297,6 @@ window.editarPortfolio = function(id) {
   document.getElementById('previewImg').src = item.imagem;
   document.getElementById('uploadPreview').style.display = 'block';
   document.getElementById('uploadArea').style.display = 'none';
-
   const form = document.getElementById('formPortfolio');
   form.style.display = 'block';
   form.scrollIntoView({ behavior: 'smooth' });
@@ -311,10 +348,8 @@ async function carregarTextosAdmin() {
   setValue('tFooterCopy', data.footer_copy || '');
 
   const { data: stats } = await supabase
-    .from('stats')
-    .select('*')
-    .order('ordem');
-  statsLista = stats || [];
+    .from('stats').select('*').order('ordem');
+  statsLista = (stats || []).map(s => ({ ...s }));
   renderizarStatsEditor();
 }
 
@@ -343,18 +378,17 @@ window.removerStat = function(i) {
   renderizarStatsEditor();
 };
 
-document.getElementById('addStat').addEventListener('click', () => {
-  statsLista.push({ numero: '', label: '', ordem: statsLista.length + 1 });
-  renderizarStatsEditor();
-});
-
 function setupSalvarTextos() {
+  document.getElementById('addStat').addEventListener('click', () => {
+    statsLista.push({ numero: '', label: '', ordem: statsLista.length + 1 });
+    renderizarStatsEditor();
+  });
+
   document.getElementById('salvarTextos').addEventListener('click', async () => {
     const btn = document.getElementById('salvarTextos');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      // Salvar config
       const { error: errConfig } = await supabase
         .from('site_config')
         .update({
@@ -377,37 +411,25 @@ function setupSalvarTextos() {
           atualizado_em: new Date().toISOString(),
         })
         .eq('id', 'config');
-
       if (errConfig) throw errConfig;
 
-      // Salvar stats: pegar IDs existentes e atualizar/inserir/deletar
-      const { data: statsExistentes } = await supabase
-        .from('stats')
-        .select('id')
-        .order('ordem');
-
-      const idsExistentes = (statsExistentes || []).map(s => s.id);
-
-      // Deletar todos e reinserir de forma segura
-      if (idsExistentes.length > 0) {
-        await supabase.from('stats').delete().in('id', idsExistentes);
-      }
-
-      if (statsLista.length > 0) {
-        const novosStats = statsLista.map((s, i) => ({
-          numero: s.numero,
-          label: s.label,
-          ordem: i + 1
-        }));
-        const { error: errStats } = await supabase.from('stats').insert(novosStats);
-        if (errStats) throw errStats;
+      // Salvar stats usando UPDATE para existentes e INSERT para novos
+      for (const stat of statsLista) {
+        if (stat.id) {
+          await supabase.from('stats')
+            .update({ numero: stat.numero, label: stat.label, ordem: stat.ordem })
+            .eq('id', stat.id);
+        } else {
+          await supabase.from('stats')
+            .insert({ numero: stat.numero, label: stat.label, ordem: stat.ordem });
+        }
       }
 
       notif('✅ Textos salvos!');
       await carregarTextosAdmin();
     } catch(e) {
       console.error(e);
-      notif('❌ Erro ao salvar textos!', 'erro');
+      notif('❌ Erro ao salvar!', 'erro');
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-save"></i> Salvar Textos';
@@ -416,13 +438,11 @@ function setupSalvarTextos() {
 }
 
 // ==========================================
-// SERVIÇOS - SEM DUPLICAÇÃO
+// SERVIÇOS - UPSERT POR ID
 // ==========================================
 async function carregarServicosAdmin() {
   const { data } = await supabase
-    .from('servicos')
-    .select('*')
-    .order('ordem');
+    .from('servicos').select('*').order('ordem');
   servicosLista = (data || []).map(s => ({ ...s }));
   renderizarServicosAdmin();
 }
@@ -433,8 +453,7 @@ function renderizarServicosAdmin() {
   if (!servicosLista.length) {
     el.innerHTML = `<div class="admin-vazio">
       <i class="fas fa-concierge-bell"></i>
-      <p>Nenhum serviço. Clique em "Novo Serviço".</p>
-    </div>`;
+      <p>Nenhum serviço.</p></div>`;
     return;
   }
   el.innerHTML = servicosLista.map((s, i) => `
@@ -453,12 +472,14 @@ function renderizarServicosAdmin() {
         </div>
         <div class="field">
           <label>Ícone (Font Awesome)</label>
-          <input type="text" value="${s.icone || ''}" placeholder="fas fa-palette"
+          <input type="text" value="${s.icone || ''}"
+                 placeholder="fas fa-palette"
                  oninput="servicosLista[${i}].icone=this.value"/>
         </div>
         <div class="field full">
           <label>Descrição</label>
-          <textarea rows="2" oninput="servicosLista[${i}].descricao=this.value">${s.descricao || ''}</textarea>
+          <textarea rows="2"
+            oninput="servicosLista[${i}].descricao=this.value">${s.descricao || ''}</textarea>
         </div>
         <div class="field full">
           <label>Cor (CSS gradient)</label>
@@ -474,13 +495,14 @@ function renderizarServicosAdmin() {
         </div>
         <div class="field">
           <label>Badge texto</label>
-          <input type="text" value="${s.badge_texto || ''}" placeholder="⭐ Mais Popular"
+          <input type="text" value="${s.badge_texto || ''}"
+                 placeholder="⭐ Mais Popular"
                  oninput="servicosLista[${i}].badge_texto=this.value"/>
         </div>
       </div>
       <div class="servico-edit-tags">
         <label>Tags</label>
-        <div class="tags-lista" id="tags-s-${i}">
+        <div class="tags-lista">
           ${(s.tags || []).map((t, ti) => `
             <div class="tag-item">
               <span>${t.texto}</span>
@@ -488,22 +510,27 @@ function renderizarServicosAdmin() {
             </div>`).join('')}
         </div>
         <div class="tag-add-form">
-          <input type="text" id="tagInputS-${i}" placeholder="Nova tag..."/>
-          <button onclick="adicionarTagServico(${i})">+ Tag</button>
+          <input type="text" id="tagS-${i}" placeholder="Nova tag..."/>
+          <button onclick="addTagServico(${i})">+ Tag</button>
         </div>
       </div>
     </div>
   `).join('');
 }
 
-window.removerServico = function(i) {
+window.removerServico = async function(i) {
   if (!confirm('Remover este serviço?')) return;
+  const item = servicosLista[i];
+  if (item.id) {
+    await supabase.from('servicos').delete().eq('id', item.id);
+  }
   servicosLista.splice(i, 1);
   renderizarServicosAdmin();
+  notif('🗑️ Serviço removido!');
 };
 
-window.adicionarTagServico = function(i) {
-  const input = document.getElementById(`tagInputS-${i}`);
+window.addTagServico = function(i) {
+  const input = document.getElementById(`tagS-${i}`);
   const txt = input.value.trim();
   if (!txt) return;
   if (!servicosLista[i].tags) servicosLista[i].tags = [];
@@ -517,11 +544,11 @@ window.removerTagServico = function(si, ti) {
   renderizarServicosAdmin();
 };
 
-function setupServicos() {
+function setupBotoesServicos() {
   document.getElementById('btnNovoServico').addEventListener('click', () => {
     servicosLista.push({
       titulo: 'Novo Serviço',
-      descricao: 'Descrição do serviço.',
+      descricao: 'Descrição.',
       icone: 'fas fa-palette',
       cor: 'linear-gradient(135deg,#7c3aed,#a855f7)',
       destaque: false,
@@ -539,23 +566,9 @@ function setupServicos() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      // Pegar IDs existentes para deletar apenas eles
-      const { data: existentes } = await supabase
-        .from('servicos')
-        .select('id');
-
-      const ids = (existentes || []).map(s => s.id);
-
-      if (ids.length > 0) {
-        const { error: errDel } = await supabase
-          .from('servicos')
-          .delete()
-          .in('id', ids);
-        if (errDel) throw errDel;
-      }
-
-      if (servicosLista.length > 0) {
-        const novos = servicosLista.map((s, i) => ({
+      for (let i = 0; i < servicosLista.length; i++) {
+        const s = servicosLista[i];
+        const dados = {
           titulo: s.titulo,
           descricao: s.descricao,
           icone: s.icone,
@@ -564,17 +577,21 @@ function setupServicos() {
           badge_texto: s.badge_texto || '',
           tags: s.tags || [],
           ordem: i + 1
-        }));
-
-        const { error: errIns } = await supabase.from('servicos').insert(novos);
-        if (errIns) throw errIns;
+        };
+        if (s.id) {
+          // Atualizar existente
+          await supabase.from('servicos').update(dados).eq('id', s.id);
+        } else {
+          // Inserir novo
+          const { data } = await supabase.from('servicos').insert(dados).select();
+          if (data && data[0]) servicosLista[i].id = data[0].id;
+        }
       }
-
       notif('✅ Serviços salvos!');
       await carregarServicosAdmin();
     } catch(e) {
       console.error(e);
-      notif('❌ Erro ao salvar serviços!', 'erro');
+      notif('❌ Erro ao salvar!', 'erro');
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-save"></i> Salvar Serviços';
@@ -583,13 +600,11 @@ function setupServicos() {
 }
 
 // ==========================================
-// PREÇOS - SEM DUPLICAÇÃO
+// PREÇOS - UPSERT POR ID
 // ==========================================
 async function carregarPrecosAdmin() {
   const { data } = await supabase
-    .from('precos')
-    .select('*')
-    .order('ordem');
+    .from('precos').select('*').order('ordem');
   precosLista = (data || []).map(p => ({ ...p }));
   renderizarPrecosAdmin();
 }
@@ -600,8 +615,7 @@ function renderizarPrecosAdmin() {
   if (!precosLista.length) {
     el.innerHTML = `<div class="admin-vazio">
       <i class="fas fa-tags"></i>
-      <p>Nenhum preço. Clique em "Novo Preço".</p>
-    </div>`;
+      <p>Nenhum preço.</p></div>`;
     return;
   }
   el.innerHTML = precosLista.map((p, i) => `
@@ -634,13 +648,18 @@ function renderizarPrecosAdmin() {
   `).join('');
 }
 
-window.removerPreco = function(i) {
-  if (!confirm('Remover este preço?')) return;
+window.removerPreco = async function(i) {
+  if (!confirm('Remover?')) return;
+  const item = precosLista[i];
+  if (item.id) {
+    await supabase.from('precos').delete().eq('id', item.id);
+  }
   precosLista.splice(i, 1);
   renderizarPrecosAdmin();
+  notif('🗑️ Preço removido!');
 };
 
-function setupPrecos() {
+function setupBotoesPrecos() {
   document.getElementById('btnNovoPreco').addEventListener('click', () => {
     precosLista.push({
       icone: '🎨',
@@ -657,38 +676,27 @@ function setupPrecos() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      const { data: existentes } = await supabase
-        .from('precos')
-        .select('id');
-
-      const ids = (existentes || []).map(p => p.id);
-
-      if (ids.length > 0) {
-        const { error: errDel } = await supabase
-          .from('precos')
-          .delete()
-          .in('id', ids);
-        if (errDel) throw errDel;
-      }
-
-      if (precosLista.length > 0) {
-        const novos = precosLista.map((p, i) => ({
+      for (let i = 0; i < precosLista.length; i++) {
+        const p = precosLista[i];
+        const dados = {
           icone: p.icone,
           nome: p.nome,
           valor: p.valor,
           obs: p.obs || '',
           ordem: i + 1
-        }));
-
-        const { error: errIns } = await supabase.from('precos').insert(novos);
-        if (errIns) throw errIns;
+        };
+        if (p.id) {
+          await supabase.from('precos').update(dados).eq('id', p.id);
+        } else {
+          const { data } = await supabase.from('precos').insert(dados).select();
+          if (data && data[0]) precosLista[i].id = data[0].id;
+        }
       }
-
       notif('✅ Preços salvos!');
       await carregarPrecosAdmin();
     } catch(e) {
       console.error(e);
-      notif('❌ Erro ao salvar preços!', 'erro');
+      notif('❌ Erro ao salvar!', 'erro');
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-save"></i> Salvar Preços';
@@ -697,7 +705,7 @@ function setupPrecos() {
 }
 
 // ==========================================
-// CONTATO - SEM DUPLICAÇÃO
+// CONTATO - UPSERT POR ID
 // ==========================================
 async function carregarContatoAdmin() {
   const { data: config } = await supabase
@@ -708,9 +716,7 @@ async function carregarContatoAdmin() {
   if (config) setValue('cDiscord', config.discord || '');
 
   const { data } = await supabase
-    .from('contato_info')
-    .select('*')
-    .order('ordem');
+    .from('contato_info').select('*').order('ordem');
   infoItems = (data || []).map(i => ({ ...i }));
   renderizarInfoEditor();
 }
@@ -743,12 +749,17 @@ function renderizarInfoEditor() {
   `).join('');
 }
 
-window.removerInfoItem = function(i) {
+window.removerInfoItem = async function(i) {
+  const item = infoItems[i];
+  if (item.id) {
+    await supabase.from('contato_info').delete().eq('id', item.id);
+  }
   infoItems.splice(i, 1);
   renderizarInfoEditor();
+  notif('🗑️ Item removido!');
 };
 
-function setupContato() {
+function setupBotoesContato() {
   document.getElementById('addInfoItem').addEventListener('click', () => {
     infoItems.push({
       icone: '💡',
@@ -764,45 +775,32 @@ function setupContato() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      // Salvar discord
       const { error: errDisc } = await supabase
         .from('site_config')
         .update({ discord: getValue('cDiscord') })
         .eq('id', 'config');
       if (errDisc) throw errDisc;
 
-      // Salvar info items sem duplicar
-      const { data: existentes } = await supabase
-        .from('contato_info')
-        .select('id');
-
-      const ids = (existentes || []).map(i => i.id);
-
-      if (ids.length > 0) {
-        const { error: errDel } = await supabase
-          .from('contato_info')
-          .delete()
-          .in('id', ids);
-        if (errDel) throw errDel;
-      }
-
-      if (infoItems.length > 0) {
-        const novos = infoItems.map((item, i) => ({
+      for (let i = 0; i < infoItems.length; i++) {
+        const item = infoItems[i];
+        const dados = {
           icone: item.icone,
           titulo: item.titulo,
           texto: item.texto,
           ordem: i + 1
-        }));
-
-        const { error: errIns } = await supabase.from('contato_info').insert(novos);
-        if (errIns) throw errIns;
+        };
+        if (item.id) {
+          await supabase.from('contato_info').update(dados).eq('id', item.id);
+        } else {
+          const { data } = await supabase.from('contato_info').insert(dados).select();
+          if (data && data[0]) infoItems[i].id = data[0].id;
+        }
       }
-
       notif('✅ Contato salvo!');
       await carregarContatoAdmin();
     } catch(e) {
       console.error(e);
-      notif('❌ Erro ao salvar contato!', 'erro');
+      notif('❌ Erro ao salvar!', 'erro');
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-save"></i> Salvar Contato';
@@ -815,12 +813,8 @@ function setupContato() {
 // ==========================================
 async function carregarAparenciaAdmin() {
   const { data } = await supabase
-    .from('site_config')
-    .select('*')
-    .eq('id', 'config')
-    .single();
+    .from('site_config').select('*').eq('id', 'config').single();
   if (!data) return;
-
   if (data.cor_primaria) {
     setValue('corPrimariaHex', data.cor_primaria);
     document.getElementById('corPrimaria').value = data.cor_primaria;
@@ -890,7 +884,7 @@ function setupAparencia() {
       notif('✅ Aparência salva! Recarregue o site.');
     } catch(e) {
       console.error(e);
-      notif('❌ Erro ao salvar aparência!', 'erro');
+      notif('❌ Erro!', 'erro');
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-save"></i> Salvar Aparência';
@@ -941,7 +935,6 @@ function notif(msg, tipo = 'ok') {
   }, 3000);
 }
 
-// Expor variáveis globais necessárias
 window.statsLista = statsLista;
 window.servicosLista = servicosLista;
 window.precosLista = precosLista;
