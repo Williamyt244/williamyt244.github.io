@@ -20,8 +20,9 @@ async function carregarSite() {
     carregarServicos(),
     carregarPrecos(),
     carregarContato(),
-    carregarEstilosCustomizados(),
   ]);
+  // Roda POR ÚLTIMO, depois de tudo carregado
+  await carregarEstilosCustomizados();
 }
 
 async function carregarConfig() {
