@@ -54,6 +54,7 @@
         <button class="nav-btn" data-aba="precos"><i class="fas fa-tags"></i> Preços</button>
         <button class="nav-btn" data-aba="contato"><i class="fas fa-headset"></i> Contato</button>
         <button class="nav-btn" data-aba="aparencia"><i class="fas fa-paint-brush"></i> Aparência</button>
+        <button class="nav-btn" data-aba="editor"><i class="fas fa-magic"></i> Editor Visual</button>
       </nav>
       <div class="sidebar-footer">
         <a href="index.html" target="_blank" class="ver-site-btn">
@@ -297,6 +298,218 @@
         </div>
         <div class="save-bar">
           <button class="btn-save-section" id="salvarAparencia"><i class="fas fa-save"></i> Salvar Aparência</button>
+        </div>
+      </div>
+
+      <!-- EDITOR VISUAL -->
+      <div class="aba" id="aba-editor" style="display:none">
+        <div class="admin-header">
+          <div>
+            <h1><i class="fas fa-magic"></i> Editor Visual</h1>
+            <p>Clique em qualquer elemento do site para editar</p>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn-cancel" id="btnResetarEstilos">
+              <i class="fas fa-undo"></i> Resetar Tudo
+            </button>
+            <button class="btn-add" id="btnSalvarEditor">
+              <i class="fas fa-save"></i> Salvar Alterações
+            </button>
+          </div>
+        </div>
+
+        <div class="editor-layout">
+
+          <!-- PAINEL LATERAL -->
+          <div class="editor-painel" id="editorPainel">
+
+            <!-- ÁRVORE -->
+            <div class="editor-section">
+              <div class="editor-section-title">
+                <i class="fas fa-sitemap"></i> Elementos
+              </div>
+              <div class="editor-arvore" id="editorArvore"></div>
+            </div>
+
+            <!-- PROPRIEDADES -->
+            <div class="editor-section" id="editorPropriedades" style="display:none">
+              <div class="editor-section-title">
+                <i class="fas fa-sliders-h"></i> Propriedades
+                <span class="editor-elemento-nome" id="editorElementoNome"></span>
+              </div>
+
+              <!-- TIPOGRAFIA -->
+              <div class="prop-grupo">
+                <div class="prop-grupo-titulo"><i class="fas fa-font"></i> Tipografia</div>
+                <div class="prop-grid">
+                  <div class="prop-field">
+                    <label>Tamanho</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propFontSize" min="8" max="120"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                  <div class="prop-field">
+                    <label>Peso</label>
+                    <select id="propFontWeight">
+                      <option value="300">Light</option>
+                      <option value="400">Regular</option>
+                      <option value="500">Medium</option>
+                      <option value="600">SemiBold</option>
+                      <option value="700">Bold</option>
+                      <option value="800">ExtraBold</option>
+                      <option value="900">Black</option>
+                    </select>
+                  </div>
+                  <div class="prop-field full">
+                    <label>Cor do Texto</label>
+                    <div class="color-input-wrap">
+                      <input type="color" id="propColor"/>
+                      <input type="text" id="propColorHex"/>
+                    </div>
+                  </div>
+                  <div class="prop-field full">
+                    <label>Alinhamento</label>
+                    <div class="align-btns">
+                      <button class="align-btn" data-align="left"><i class="fas fa-align-left"></i></button>
+                      <button class="align-btn" data-align="center"><i class="fas fa-align-center"></i></button>
+                      <button class="align-btn" data-align="right"><i class="fas fa-align-right"></i></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ESPAÇAMENTO -->
+              <div class="prop-grupo">
+                <div class="prop-grupo-titulo"><i class="fas fa-expand-arrows-alt"></i> Espaçamento</div>
+                <div class="prop-grid">
+                  <div class="prop-field">
+                    <label>Margin Top</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propMarginTop"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                  <div class="prop-field">
+                    <label>Margin Bottom</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propMarginBottom"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                  <div class="prop-field">
+                    <label>Padding Top</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propPaddingTop"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                  <div class="prop-field">
+                    <label>Padding Bottom</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propPaddingBottom"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                  <div class="prop-field">
+                    <label>Padding Left</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propPaddingLeft"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                  <div class="prop-field">
+                    <label>Padding Right</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propPaddingRight"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- APARÊNCIA -->
+              <div class="prop-grupo">
+                <div class="prop-grupo-titulo"><i class="fas fa-paint-brush"></i> Aparência</div>
+                <div class="prop-grid">
+                  <div class="prop-field full">
+                    <label>Cor de Fundo</label>
+                    <div class="color-input-wrap">
+                      <input type="color" id="propBgColor"/>
+                      <input type="text" id="propBgColorHex"/>
+                    </div>
+                  </div>
+                  <div class="prop-field">
+                    <label>Border Radius</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propBorderRadius" min="0" max="100"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                  <div class="prop-field">
+                    <label>Opacidade</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propOpacity" min="0" max="100"/>
+                      <span class="prop-unit">%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- POSIÇÃO -->
+              <div class="prop-grupo">
+                <div class="prop-grupo-titulo"><i class="fas fa-arrows-alt"></i> Dimensões</div>
+                <div class="prop-grid">
+                  <div class="prop-field">
+                    <label>Largura</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propWidth" min="0"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                  <div class="prop-field">
+                    <label>Altura</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propHeight" min="0"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button class="btn-resetar-elemento" id="btnResetarElemento">
+                <i class="fas fa-undo"></i> Resetar este elemento
+              </button>
+            </div>
+
+          </div>
+
+          <!-- PREVIEW -->
+          <div class="editor-preview-wrap">
+            <div class="preview-toolbar">
+              <div class="preview-devices">
+                <button class="device-btn active" data-device="desktop" title="Desktop">
+                  <i class="fas fa-desktop"></i>
+                </button>
+                <button class="device-btn" data-device="tablet" title="Tablet">
+                  <i class="fas fa-tablet-alt"></i>
+                </button>
+                <button class="device-btn" data-device="mobile" title="Mobile">
+                  <i class="fas fa-mobile-alt"></i>
+                </button>
+              </div>
+              <div class="preview-url">
+                <i class="fas fa-globe"></i> index.html
+              </div>
+              <button class="preview-refresh" id="btnRefreshPreview" title="Recarregar">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+            <div class="preview-container" id="previewContainer">
+              <iframe id="editorIframe" src="index.html" frameborder="0"></iframe>
+            </div>
+          </div>
+
         </div>
       </div>
 
