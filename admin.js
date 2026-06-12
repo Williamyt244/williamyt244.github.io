@@ -1,4 +1,5 @@
 import { supabase } from './supabase-config.js';
+import { inicializarEditor } from './editor.js';
 
 // ==========================================
 // ESTADO GLOBAL
@@ -15,7 +16,7 @@ let imagemUrlAtual = '';
 let imagemPathAtual = '';
 
 // ==========================================
-// AUTH - CORRIGIDO
+// AUTH
 // ==========================================
 supabase.auth.getSession().then(({ data: { session } }) => {
   if (session) {
@@ -72,7 +73,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 });
 
 // ==========================================
-// INICIALIZAR - SÓ UMA VEZ
+// INICIALIZAR
 // ==========================================
 function inicializarAdmin() {
   setupAbas();
@@ -95,12 +96,19 @@ function inicializarAdmin() {
 // ABAS
 // ==========================================
 function setupAbas() {
+  let editorIniciado = false;
+
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.querySelectorAll('.aba').forEach(a => a.style.display = 'none');
       document.getElementById(`aba-${btn.dataset.aba}`).style.display = 'block';
+
+      if (btn.dataset.aba === 'editor' && !editorIniciado) {
+        editorIniciado = true;
+        inicializarEditor();
+      }
     });
   });
 }
@@ -422,7 +430,6 @@ function setupSalvarTextos() {
         .eq('id', 'config');
       if (error) throw error;
 
-      // Salvar stats individualmente
       for (let i = 0; i < statsLista.length; i++) {
         const s = statsLista[i];
         if (s.id) {
@@ -945,7 +952,6 @@ function notif(msg, tipo = 'ok') {
   }, 3000);
 }
 
-// Expor arrays como propriedades reativas do window
 Object.defineProperty(window, 'servicosLista', {
   get: () => servicosLista,
   set: (v) => { servicosLista = v; }
