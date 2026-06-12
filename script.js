@@ -20,6 +20,7 @@ async function carregarSite() {
     carregarServicos(),
     carregarPrecos(),
     carregarContato(),
+    carregarEstilosCustomizados(),
   ]);
 }
 
@@ -83,6 +84,59 @@ function aplicarCores(data) {
   if (data.cor_primaria && data.cor_secundaria) {
     root.style.setProperty('--gradient',
       `linear-gradient(135deg,${data.cor_primaria},${data.cor_secundaria})`);
+  }
+}
+
+async function carregarEstilosCustomizados() {
+  try {
+    const { data } = await supabase
+      .from('estilos_elementos')
+      .select('propriedades')
+      .eq('id', 'estilos')
+      .single();
+
+    if (!data?.propriedades) return;
+
+    const MAPA_SELETORES = {
+      'navbar': '.navbar',
+      'nav-logo': '.nav-logo',
+      'nav-cta': '.nav-cta',
+      'hero': '.hero',
+      'hero-badge': '.hero-badge',
+      'hero-title': '.hero-title',
+      'hero-subtitle': '.hero-subtitle',
+      'btn-primary': '.btn-primary',
+      'btn-secondary': '.btn-secondary',
+      'hero-stats': '.hero-stats',
+      'servicos': '.servicos',
+      'servicos-grid': '.servicos-grid',
+      'section-tag-serv': '.servicos .section-tag',
+      'section-title-serv': '.servicos .section-title',
+      'precos': '.precos',
+      'precos-grid': '.precos-grid',
+      'combo-aviso': '.combo-aviso',
+      'portfolio-section': '.portfolio-section',
+      'filtros': '.filtros',
+      'portfolio-grid': '.portfolio-grid',
+      'contato': '.contato',
+      'contato-card': '.contato-card',
+      'contato-info': '.contato-info',
+      'footer': '.footer',
+      'footer-logo': '.footer-logo',
+      'footer-links': '.footer-links',
+    };
+
+    Object.entries(data.propriedades).forEach(([elementoId, props]) => {
+      const seletor = MAPA_SELETORES[elementoId];
+      if (!seletor) return;
+      const el = document.querySelector(seletor);
+      if (!el) return;
+      Object.entries(props).forEach(([prop, val]) => {
+        el.style[prop] = val;
+      });
+    });
+  } catch(e) {
+    console.error('Erro ao carregar estilos:', e);
   }
 }
 
