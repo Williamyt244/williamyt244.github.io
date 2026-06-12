@@ -945,7 +945,20 @@ function notif(msg, tipo = 'ok') {
   }, 3000);
 }
 
-window.statsLista = statsLista;
-window.servicosLista = servicosLista;
-window.precosLista = precosLista;
-window.infoItems = infoItems;
+// Expor arrays como propriedades reativas do window
+Object.defineProperty(window, 'servicosLista', {
+  get: () => servicosLista,
+  set: (v) => { servicosLista = v; }
+});
+Object.defineProperty(window, 'precosLista', {
+  get: () => precosLista,
+  set: (v) => { precosLista = v; }
+});
+Object.defineProperty(window, 'infoItems', {
+  get: () => infoItems,
+  set: (v) => { infoItems = v; }
+});
+Object.defineProperty(window, 'statsLista', {
+  get: () => statsLista,
+  set: (v) => { statsLista = v; }
+});
