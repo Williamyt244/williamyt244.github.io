@@ -361,6 +361,20 @@
                       <option value="900">Black</option>
                     </select>
                   </div>
+                  <div class="prop-field">
+                    <label>Espaço letras</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propLetterSpacing" step="0.1"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                  <div class="prop-field">
+                    <label>Altura linha</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propLineHeight" step="0.1"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
                   <div class="prop-field full">
                     <label>Cor do Texto</label>
                     <div class="color-input-wrap">
@@ -379,47 +393,68 @@
                 </div>
               </div>
 
-              <!-- ESPAÇAMENTO -->
+              <!-- MARGIN -->
               <div class="prop-grupo">
-                <div class="prop-grupo-titulo"><i class="fas fa-expand-arrows-alt"></i> Espaçamento</div>
+                <div class="prop-grupo-titulo"><i class="fas fa-expand-arrows-alt"></i> Margin</div>
                 <div class="prop-grid">
                   <div class="prop-field">
-                    <label>Margin Top</label>
+                    <label>Top</label>
                     <div class="prop-input-wrap">
                       <input type="number" id="propMarginTop"/>
                       <span class="prop-unit">px</span>
                     </div>
                   </div>
                   <div class="prop-field">
-                    <label>Margin Bottom</label>
+                    <label>Bottom</label>
                     <div class="prop-input-wrap">
                       <input type="number" id="propMarginBottom"/>
                       <span class="prop-unit">px</span>
                     </div>
                   </div>
                   <div class="prop-field">
-                    <label>Padding Top</label>
+                    <label>Left</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propMarginLeft"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                  <div class="prop-field">
+                    <label>Right</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propMarginRight"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PADDING -->
+              <div class="prop-grupo">
+                <div class="prop-grupo-titulo"><i class="fas fa-compress-arrows-alt"></i> Padding</div>
+                <div class="prop-grid">
+                  <div class="prop-field">
+                    <label>Top</label>
                     <div class="prop-input-wrap">
                       <input type="number" id="propPaddingTop"/>
                       <span class="prop-unit">px</span>
                     </div>
                   </div>
                   <div class="prop-field">
-                    <label>Padding Bottom</label>
+                    <label>Bottom</label>
                     <div class="prop-input-wrap">
                       <input type="number" id="propPaddingBottom"/>
                       <span class="prop-unit">px</span>
                     </div>
                   </div>
                   <div class="prop-field">
-                    <label>Padding Left</label>
+                    <label>Left</label>
                     <div class="prop-input-wrap">
                       <input type="number" id="propPaddingLeft"/>
                       <span class="prop-unit">px</span>
                     </div>
                   </div>
                   <div class="prop-field">
-                    <label>Padding Right</label>
+                    <label>Right</label>
                     <div class="prop-input-wrap">
                       <input type="number" id="propPaddingRight"/>
                       <span class="prop-unit">px</span>
@@ -442,7 +477,7 @@
                   <div class="prop-field">
                     <label>Border Radius</label>
                     <div class="prop-input-wrap">
-                      <input type="number" id="propBorderRadius" min="0" max="100"/>
+                      <input type="number" id="propBorderRadius" min="0" max="999"/>
                       <span class="prop-unit">px</span>
                     </div>
                   </div>
@@ -453,10 +488,17 @@
                       <span class="prop-unit">%</span>
                     </div>
                   </div>
+                  <div class="prop-field full">
+                    <label>Gap (espaço entre filhos)</label>
+                    <div class="prop-input-wrap">
+                      <input type="number" id="propGap" min="0"/>
+                      <span class="prop-unit">px</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <!-- POSIÇÃO -->
+              <!-- DIMENSÕES -->
               <div class="prop-grupo">
                 <div class="prop-grupo-titulo"><i class="fas fa-arrows-alt"></i> Dimensões</div>
                 <div class="prop-grid">
@@ -480,8 +522,8 @@
               <button class="btn-resetar-elemento" id="btnResetarElemento">
                 <i class="fas fa-undo"></i> Resetar este elemento
               </button>
-            </div>
 
+            </div>
           </div>
 
           <!-- PREVIEW -->
