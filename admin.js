@@ -13,25 +13,28 @@ let idEdicao = null;
 let imagemFile = null;
 let imagemUrlAtual = '';
 let imagemPathAtual = '';
-let adminIniciado = false; // ← EVITA INICIALIZAR DUAS VEZES
 
 // ==========================================
-// AUTH
+// AUTH - CORRIGIDO
 // ==========================================
-supabase.auth.onAuthStateChange((event, session) => {
+supabase.auth.getSession().then(({ data: { session } }) => {
   if (session) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminPanel').style.display = 'flex';
-    if (!adminIniciado) {
-      adminIniciado = true;
-      inicializarAdmin();
-    }
+    mostrarPainel();
   } else {
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('adminPanel').style.display = 'none';
-    adminIniciado = false;
+    mostrarLogin();
   }
 });
+
+function mostrarPainel() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'flex';
+  inicializarAdmin();
+}
+
+function mostrarLogin() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('adminPanel').style.display = 'none';
+}
 
 document.getElementById('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -40,15 +43,19 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
   erro.classList.remove('show');
+
   const { error } = await supabase.auth.signInWithPassword({
     email: document.getElementById('loginEmail').value,
     password: document.getElementById('loginSenha').value,
   });
+
   if (error) {
     erro.textContent = '❌ Email ou senha incorretos!';
     erro.classList.add('show');
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
+  } else {
+    mostrarPainel();
   }
 });
 
@@ -59,15 +66,15 @@ document.getElementById('eyeBtn').addEventListener('click', () => {
     input.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
 });
 
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  adminIniciado = false;
-  supabase.auth.signOut();
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  mostrarLogin();
 });
 
 // ==========================================
-// INICIALIZAR
+// INICIALIZAR - SÓ UMA VEZ
 // ==========================================
-async function inicializarAdmin() {
+function inicializarAdmin() {
   setupAbas();
   setupPortfolioForm();
   setupBotoesServicos();
@@ -76,14 +83,12 @@ async function inicializarAdmin() {
   setupAparencia();
   setupSalvarTextos();
 
-  await Promise.all([
-    carregarPortfoliosAdmin(),
-    carregarTextosAdmin(),
-    carregarServicosAdmin(),
-    carregarPrecosAdmin(),
-    carregarContatoAdmin(),
-    carregarAparenciaAdmin(),
-  ]);
+  carregarPortfoliosAdmin();
+  carregarTextosAdmin();
+  carregarServicosAdmin();
+  carregarPrecosAdmin();
+  carregarContatoAdmin();
+  carregarAparenciaAdmin();
 }
 
 // ==========================================
@@ -247,8 +252,7 @@ async function salvarPortfolio() {
       document.getElementById('progressTxt').textContent = 'Concluído!';
 
       const { data: urlData } = supabase.storage
-        .from('portfolios')
-        .getPublicUrl(imagemPath);
+        .from('portfolios').getPublicUrl(imagemPath);
       imagemUrl = urlData.publicUrl;
     }
 
@@ -373,9 +377,14 @@ function renderizarStatsEditor() {
   `).join('');
 }
 
-window.removerStat = function(i) {
+window.removerStat = async function(i) {
+  const stat = statsLista[i];
+  if (stat.id) {
+    await supabase.from('stats').delete().eq('id', stat.id);
+  }
   statsLista.splice(i, 1);
   renderizarStatsEditor();
+  notif('🗑️ Stat removida!');
 };
 
 function setupSalvarTextos() {
@@ -389,7 +398,7 @@ function setupSalvarTextos() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      const { error: errConfig } = await supabase
+      const { error } = await supabase
         .from('site_config')
         .update({
           nomesite: getValue('tNomeSite'),
@@ -411,17 +420,20 @@ function setupSalvarTextos() {
           atualizado_em: new Date().toISOString(),
         })
         .eq('id', 'config');
-      if (errConfig) throw errConfig;
+      if (error) throw error;
 
-      // Salvar stats usando UPDATE para existentes e INSERT para novos
-      for (const stat of statsLista) {
-        if (stat.id) {
+      // Salvar stats individualmente
+      for (let i = 0; i < statsLista.length; i++) {
+        const s = statsLista[i];
+        if (s.id) {
           await supabase.from('stats')
-            .update({ numero: stat.numero, label: stat.label, ordem: stat.ordem })
-            .eq('id', stat.id);
+            .update({ numero: s.numero, label: s.label, ordem: i + 1 })
+            .eq('id', s.id);
         } else {
-          await supabase.from('stats')
-            .insert({ numero: stat.numero, label: stat.label, ordem: stat.ordem });
+          const { data } = await supabase.from('stats')
+            .insert({ numero: s.numero, label: s.label, ordem: i + 1 })
+            .select();
+          if (data?.[0]) statsLista[i].id = data[0].id;
         }
       }
 
@@ -438,7 +450,7 @@ function setupSalvarTextos() {
 }
 
 // ==========================================
-// SERVIÇOS - UPSERT POR ID
+// SERVIÇOS
 // ==========================================
 async function carregarServicosAdmin() {
   const { data } = await supabase
@@ -482,7 +494,7 @@ function renderizarServicosAdmin() {
             oninput="servicosLista[${i}].descricao=this.value">${s.descricao || ''}</textarea>
         </div>
         <div class="field full">
-          <label>Cor (CSS gradient)</label>
+          <label>Cor</label>
           <input type="text" value="${s.cor || ''}"
                  oninput="servicosLista[${i}].cor=this.value"/>
         </div>
@@ -579,12 +591,10 @@ function setupBotoesServicos() {
           ordem: i + 1
         };
         if (s.id) {
-          // Atualizar existente
           await supabase.from('servicos').update(dados).eq('id', s.id);
         } else {
-          // Inserir novo
           const { data } = await supabase.from('servicos').insert(dados).select();
-          if (data && data[0]) servicosLista[i].id = data[0].id;
+          if (data?.[0]) servicosLista[i].id = data[0].id;
         }
       }
       notif('✅ Serviços salvos!');
@@ -600,7 +610,7 @@ function setupBotoesServicos() {
 }
 
 // ==========================================
-// PREÇOS - UPSERT POR ID
+// PREÇOS
 // ==========================================
 async function carregarPrecosAdmin() {
   const { data } = await supabase
@@ -689,7 +699,7 @@ function setupBotoesPrecos() {
           await supabase.from('precos').update(dados).eq('id', p.id);
         } else {
           const { data } = await supabase.from('precos').insert(dados).select();
-          if (data && data[0]) precosLista[i].id = data[0].id;
+          if (data?.[0]) precosLista[i].id = data[0].id;
         }
       }
       notif('✅ Preços salvos!');
@@ -705,7 +715,7 @@ function setupBotoesPrecos() {
 }
 
 // ==========================================
-// CONTATO - UPSERT POR ID
+// CONTATO
 // ==========================================
 async function carregarContatoAdmin() {
   const { data: config } = await supabase
@@ -793,7 +803,7 @@ function setupBotoesContato() {
           await supabase.from('contato_info').update(dados).eq('id', item.id);
         } else {
           const { data } = await supabase.from('contato_info').insert(dados).select();
-          if (data && data[0]) infoItems[i].id = data[0].id;
+          if (data?.[0]) infoItems[i].id = data[0].id;
         }
       }
       notif('✅ Contato salvo!');
