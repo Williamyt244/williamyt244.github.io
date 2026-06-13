@@ -267,7 +267,9 @@ async function carregarPrecos() {
 
   grid.innerHTML = data.map(p => `
     <div class="preco-card">
-      <span class="preco-icon">${p.icone}</span>
+      <div class="preco-icon-box" style="background:${p.cor || 'linear-gradient(135deg,#7c3aed,#a855f7)'}">
+        <i class="${p.icone || 'fas fa-star'}"></i>
+      </div>
       <div class="preco-nome">${p.nome}</div>
       <div class="preco-valor">${p.valor}</div>
       <div class="preco-obs">${p.obs}</div>
