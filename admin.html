@@ -21,14 +21,19 @@
           <label>E-mail</label>
           <div class="input-wrap">
             <i class="fas fa-envelope"></i>
-            <input type="email" id="loginEmail" placeholder="seu@email.com" required/>
+            <input type="email" id="loginEmail" placeholder="seu@email.com" required style="
+              margin-right: 0px;
+              padding-left: 32px;
+          ">
           </div>
         </div>
         <div class="field">
           <label>Senha</label>
           <div class="input-wrap">
             <i class="fas fa-lock"></i>
-            <input type="password" id="loginSenha" placeholder="Sua senha..." required/>
+            <input type="password" id="loginSenha" placeholder="Sua senha..." required style="
+                padding-left: 32px;
+              ">        
             <button type="button" class="eye-btn" id="eyeBtn">
               <i class="fas fa-eye"></i>
             </button>
@@ -142,39 +147,11 @@
           <div><h1><i class="fas fa-font"></i> Textos do Site</h1><p>Edite qualquer texto</p></div>
         </div>
         <div class="secoes-editor">
-
-          <!-- CARD STATUS ONLINE/OFFLINE -->
-          <div class="editor-card">
-            <div class="editor-card-header"><i class="fas fa-circle"></i> Status de Disponibilidade</div>
-            <div class="status-toggle-wrap">
-              <div class="status-preview" id="statusPreview">
-                <span class="status-dot" id="statusDot"></span>
-                <span id="statusTextoPreview">Designer online.</span>
-              </div>
-              <div class="status-toggle-opcoes">
-                <label class="check-label" id="offlineCheckLabel">
-                  <input type="checkbox" id="tOffline"/>
-                  <span class="check-box" id="offlineCheckBox"></span>
-                  <span id="offlineCheckTexto">Marcar como Offline</span>
-                </label>
-              </div>
-            </div>
-            <div class="form-grid" style="margin-top:16px">
-              <div class="field full">
-                <label>🟢 Texto quando Online</label>
-                <input type="text" id="tHeroBadge" placeholder="Ex: 🚀 Designer de Minecraft disponível"/>
-              </div>
-              <div class="field full">
-                <label>🔴 Texto quando Offline</label>
-                <input type="text" id="tHeroBadgeOffline" placeholder="Ex: 🔴 Designer offline no momento"/>
-              </div>
-            </div>
-          </div>
-
           <div class="editor-card">
             <div class="editor-card-header"><i class="fas fa-home"></i> Seção Inicial (Hero)</div>
             <div class="form-grid">
               <div class="field full"><label>🏷️ Nome do Site</label><input type="text" id="tNomeSite" placeholder="WilliamDesign"/><small>Aparece na navbar e footer</small></div>
+              <div class="field full"><label>🚀 Badge verde</label><input type="text" id="tHeroBadge"/></div>
               <div class="field full"><label>📢 Título (parte 1)</label><input type="text" id="tHeroTitulo"/></div>
               <div class="field full"><label>🎨 Título colorido</label><input type="text" id="tHeroDestaque"/></div>
               <div class="field full"><label>📄 Subtítulo</label><textarea id="tHeroSub" rows="2"></textarea></div>
@@ -187,7 +164,6 @@
             <div id="statsEditor"></div>
             <button class="btn-add-small" id="addStat"><i class="fas fa-plus"></i> Adicionar</button>
           </div>
-
           <div class="editor-card">
             <div class="editor-card-header"><i class="fas fa-concierge-bell"></i> Serviços</div>
             <div class="form-grid">
@@ -348,18 +324,26 @@
         </div>
 
         <div class="editor-layout">
+
+          <!-- PAINEL LATERAL -->
           <div class="editor-painel" id="editorPainel">
+
+            <!-- ÁRVORE -->
             <div class="editor-section">
               <div class="editor-section-title">
                 <i class="fas fa-sitemap"></i> Elementos
               </div>
               <div class="editor-arvore" id="editorArvore"></div>
             </div>
+
+            <!-- PROPRIEDADES -->
             <div class="editor-section" id="editorPropriedades" style="display:none">
               <div class="editor-section-title">
                 <i class="fas fa-sliders-h"></i> Propriedades
                 <span class="editor-elemento-nome" id="editorElementoNome"></span>
               </div>
+
+              <!-- TIPOGRAFIA -->
               <div class="prop-grupo">
                 <div class="prop-grupo-titulo"><i class="fas fa-font"></i> Tipografia</div>
                 <div class="prop-grid">
@@ -413,6 +397,8 @@
                   </div>
                 </div>
               </div>
+
+              <!-- MARGIN -->
               <div class="prop-grupo">
                 <div class="prop-grupo-titulo"><i class="fas fa-expand-arrows-alt"></i> Margin</div>
                 <div class="prop-grid">
@@ -446,6 +432,8 @@
                   </div>
                 </div>
               </div>
+
+              <!-- PADDING -->
               <div class="prop-grupo">
                 <div class="prop-grupo-titulo"><i class="fas fa-compress-arrows-alt"></i> Padding</div>
                 <div class="prop-grid">
@@ -479,6 +467,8 @@
                   </div>
                 </div>
               </div>
+
+              <!-- APARÊNCIA -->
               <div class="prop-grupo">
                 <div class="prop-grupo-titulo"><i class="fas fa-paint-brush"></i> Aparência</div>
                 <div class="prop-grid">
@@ -512,6 +502,8 @@
                   </div>
                 </div>
               </div>
+
+              <!-- DIMENSÕES -->
               <div class="prop-grupo">
                 <div class="prop-grupo-titulo"><i class="fas fa-arrows-alt"></i> Dimensões</div>
                 <div class="prop-grid">
@@ -531,12 +523,15 @@
                   </div>
                 </div>
               </div>
+
               <button class="btn-resetar-elemento" id="btnResetarElemento">
                 <i class="fas fa-undo"></i> Resetar este elemento
               </button>
+
             </div>
           </div>
 
+          <!-- PREVIEW -->
           <div class="editor-preview-wrap">
             <div class="preview-toolbar">
               <div class="preview-devices">
@@ -561,6 +556,7 @@
               <iframe id="editorIframe" src="index.html" frameborder="0"></iframe>
             </div>
           </div>
+
         </div>
       </div>
 
