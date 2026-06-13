@@ -55,7 +55,7 @@ async function carregarConfig() {
     if (data.discord) {
       setText('discordUser', data.discord);
       document.getElementById('btnDiscord').onclick = () =>
-        window.open(`https://discord.com/users/${data.discord}`, '_blank');
+        window.open(`https://discord.com/users/1090758896198619197`, '_blank');
     }
 
     await carregarStats();
