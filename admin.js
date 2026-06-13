@@ -656,8 +656,7 @@ function renderizarPrecosAdmin() {
                  oninput="precosLista[${i}].obs=this.value"/>
         </div>
       </div>
-      <button class="btn-remove-item" onclick="removerPreco(${i})"
-              style="margin-top:10px">
+      <button class="btn-remove-item" onclick="removerPreco(${i})">
         <i class="fas fa-trash"></i> Remover
       </button>
     </div>
