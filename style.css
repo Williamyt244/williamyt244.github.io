@@ -139,9 +139,9 @@ body{font-family:'Inter',sans-serif;background:var(--dark);color:var(--text);ove
   color: white;
   margin: 0 auto 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  flex-shrink: 0;
 }
 
-/* Manter compatibilidade com emoji antigo */
 .preco-icon {
   font-size: 38px;
   margin-bottom: 14px;
