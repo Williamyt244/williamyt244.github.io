@@ -333,6 +333,7 @@ async function carregarTextosAdmin() {
 
   setValue('tNomeSite', data.nomesite || '');
   setValue('tHeroBadge', data.hero_badge || '');
+  setValue('tHeroBadgeOffline', data.hero_badge_offline || '🔴 Designer offline no momento');
   setValue('tHeroTitulo', data.hero_titulo || '');
   setValue('tHeroDestaque', data.hero_titulo_destaque || '');
   setValue('tHeroSub', data.hero_subtitulo || '');
@@ -348,9 +349,116 @@ async function carregarTextosAdmin() {
   setValue('tFooterDesc', data.footer_desc || '');
   setValue('tFooterCopy', data.footer_copy || '');
 
+  // Status offline
+  const offline = data.offline || false;
+  document.getElementById('tOffline').checked = offline;
+  atualizarStatusPreview(offline, data.hero_badge, data.hero_badge_offline);
+
+  // Listener do checkbox
+  document.getElementById('tOffline').addEventListener('change', function() {
+    atualizarStatusPreview(
+      this.checked,
+      document.getElementById('tHeroBadge').value,
+      document.getElementById('tHeroBadgeOffline').value
+    );
+  });
+
+  // Listeners dos textos para atualizar preview ao digitar
+  document.getElementById('tHeroBadge').addEventListener('input', function() {
+    if (!document.getElementById('tOffline').checked) {
+      document.getElementById('statusTextoPreview').textContent = this.value;
+    }
+  });
+
+  document.getElementById('tHeroBadgeOffline').addEventListener('input', function() {
+    if (document.getElementById('tOffline').checked) {
+      document.getElementById('statusTextoPreview').textContent = this.value;
+    }
+  });
+
   const { data: stats } = await supabase.from('stats').select('*').order('ordem');
   statsLista = (stats || []).map(s => ({ ...s }));
   renderizarStatsEditor();
+}
+
+function atualizarStatusPreview(offline, badgeOnline, badgeOffline) {
+  const preview = document.getElementById('statusPreview');
+  const dot = document.getElementById('statusDot');
+  const texto = document.getElementById('statusTextoPreview');
+  const checkTexto = document.getElementById('offlineCheckTexto');
+
+  if (offline) {
+    preview.classList.add('offline');
+    dot.classList.add('offline');
+    texto.textContent = badgeOffline || '🔴 Designer offline no momento';
+    checkTexto.textContent = '✅ Offline ativado';
+  } else {
+    preview.classList.remove('offline');
+    dot.classList.remove('offline');
+    texto.textContent = badgeOnline || '🚀 Designer disponível';
+    checkTexto.textContent = 'Marcar como Offline';
+  }
+}
+
+function setupSalvarTextos() {
+  document.getElementById('addStat').addEventListener('click', () => {
+    statsLista.push({ numero: '', label: '', ordem: statsLista.length + 1 });
+    renderizarStatsEditor();
+  });
+
+  document.getElementById('salvarTextos').addEventListener('click', async () => {
+    const btn = document.getElementById('salvarTextos');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    try {
+      const offline = document.getElementById('tOffline').checked;
+
+      const { error } = await supabase.from('site_config').update({
+        nomesite: getValue('tNomeSite'),
+        hero_badge: getValue('tHeroBadge'),
+        hero_badge_offline: getValue('tHeroBadgeOffline'),
+        offline: offline,
+        hero_titulo: getValue('tHeroTitulo'),
+        hero_titulo_destaque: getValue('tHeroDestaque'),
+        hero_subtitulo: getValue('tHeroSub'),
+        btn_portfolio: getValue('tBtn1'),
+        btn_solicitar: getValue('tBtn2'),
+        btn_nav: getValue('tBtnNav'),
+        servicos_tag: getValue('tServTag'),
+        servicos_subtitulo: getValue('tServSub'),
+        precos_subtitulo: getValue('tPrecSub'),
+        combo_texto: getValue('tCombo'),
+        contato_subtitulo: getValue('tContSub'),
+        contato_desc: getValue('tContDesc'),
+        footer_desc: getValue('tFooterDesc'),
+        footer_copy: getValue('tFooterCopy'),
+        atualizado_em: new Date().toISOString(),
+      }).eq('id', 'config');
+      if (error) throw error;
+
+      for (let i = 0; i < statsLista.length; i++) {
+        const s = statsLista[i];
+        if (s.id) {
+          await supabase.from('stats')
+            .update({ numero: s.numero, label: s.label, ordem: i + 1 })
+            .eq('id', s.id);
+        } else {
+          const { data } = await supabase.from('stats')
+            .insert({ numero: s.numero, label: s.label, ordem: i + 1 }).select();
+          if (data?.[0]) statsLista[i].id = data[0].id;
+        }
+      }
+
+      notif(offline ? '🔴 Modo Offline ativado!' : '🟢 Modo Online ativado!');
+      await carregarTextosAdmin();
+    } catch(e) {
+      console.error(e);
+      notif('❌ Erro ao salvar!', 'erro');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> Salvar Textos';
+    }
+  });
 }
 
 function renderizarStatsEditor() {
