@@ -19,11 +19,8 @@ let imagemPathAtual = '';
 // AUTH
 // ==========================================
 supabase.auth.getSession().then(({ data: { session } }) => {
-  if (session) {
-    mostrarPainel();
-  } else {
-    mostrarLogin();
-  }
+  if (session) mostrarPainel();
+  else mostrarLogin();
 });
 
 function mostrarPainel() {
@@ -97,14 +94,12 @@ function inicializarAdmin() {
 // ==========================================
 function setupAbas() {
   let editorIniciado = false;
-
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.querySelectorAll('.aba').forEach(a => a.style.display = 'none');
       document.getElementById(`aba-${btn.dataset.aba}`).style.display = 'block';
-
       if (btn.dataset.aba === 'editor' && !editorIniciado) {
         editorIniciado = true;
         inicializarEditor();
@@ -118,9 +113,7 @@ function setupAbas() {
 // ==========================================
 async function carregarPortfoliosAdmin() {
   const { data } = await supabase
-    .from('portfolios')
-    .select('*')
-    .order('criado_em', { ascending: false });
+    .from('portfolios').select('*').order('criado_em', { ascending: false });
   portfolios = data || [];
   renderizarPortfoliosAdmin();
 }
@@ -252,8 +245,7 @@ async function salvarPortfolio() {
       imagemPath = `${Date.now()}.${ext}`;
 
       const { error: upErr } = await supabase.storage
-        .from('portfolios')
-        .upload(imagemPath, imagemFile, { upsert: true });
+        .from('portfolios').upload(imagemPath, imagemFile, { upsert: true });
       if (upErr) throw upErr;
 
       document.getElementById('progressFill').style.width = '100%';
@@ -336,10 +328,7 @@ window.deletarPortfolio = async function(id) {
 // ==========================================
 async function carregarTextosAdmin() {
   const { data } = await supabase
-    .from('site_config')
-    .select('*')
-    .eq('id', 'config')
-    .single();
+    .from('site_config').select('*').eq('id', 'config').single();
   if (!data) return;
 
   setValue('tNomeSite', data.nomesite || '');
@@ -359,8 +348,7 @@ async function carregarTextosAdmin() {
   setValue('tFooterDesc', data.footer_desc || '');
   setValue('tFooterCopy', data.footer_copy || '');
 
-  const { data: stats } = await supabase
-    .from('stats').select('*').order('ordem');
+  const { data: stats } = await supabase.from('stats').select('*').order('ordem');
   statsLista = (stats || []).map(s => ({ ...s }));
   renderizarStatsEditor();
 }
@@ -387,9 +375,7 @@ function renderizarStatsEditor() {
 
 window.removerStat = async function(i) {
   const stat = statsLista[i];
-  if (stat.id) {
-    await supabase.from('stats').delete().eq('id', stat.id);
-  }
+  if (stat.id) await supabase.from('stats').delete().eq('id', stat.id);
   statsLista.splice(i, 1);
   renderizarStatsEditor();
   notif('🗑️ Stat removida!');
@@ -406,28 +392,25 @@ function setupSalvarTextos() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      const { error } = await supabase
-        .from('site_config')
-        .update({
-          nomesite: getValue('tNomeSite'),
-          hero_badge: getValue('tHeroBadge'),
-          hero_titulo: getValue('tHeroTitulo'),
-          hero_titulo_destaque: getValue('tHeroDestaque'),
-          hero_subtitulo: getValue('tHeroSub'),
-          btn_portfolio: getValue('tBtn1'),
-          btn_solicitar: getValue('tBtn2'),
-          btn_nav: getValue('tBtnNav'),
-          servicos_tag: getValue('tServTag'),
-          servicos_subtitulo: getValue('tServSub'),
-          precos_subtitulo: getValue('tPrecSub'),
-          combo_texto: getValue('tCombo'),
-          contato_subtitulo: getValue('tContSub'),
-          contato_desc: getValue('tContDesc'),
-          footer_desc: getValue('tFooterDesc'),
-          footer_copy: getValue('tFooterCopy'),
-          atualizado_em: new Date().toISOString(),
-        })
-        .eq('id', 'config');
+      const { error } = await supabase.from('site_config').update({
+        nomesite: getValue('tNomeSite'),
+        hero_badge: getValue('tHeroBadge'),
+        hero_titulo: getValue('tHeroTitulo'),
+        hero_titulo_destaque: getValue('tHeroDestaque'),
+        hero_subtitulo: getValue('tHeroSub'),
+        btn_portfolio: getValue('tBtn1'),
+        btn_solicitar: getValue('tBtn2'),
+        btn_nav: getValue('tBtnNav'),
+        servicos_tag: getValue('tServTag'),
+        servicos_subtitulo: getValue('tServSub'),
+        precos_subtitulo: getValue('tPrecSub'),
+        combo_texto: getValue('tCombo'),
+        contato_subtitulo: getValue('tContSub'),
+        contato_desc: getValue('tContDesc'),
+        footer_desc: getValue('tFooterDesc'),
+        footer_copy: getValue('tFooterCopy'),
+        atualizado_em: new Date().toISOString(),
+      }).eq('id', 'config');
       if (error) throw error;
 
       for (let i = 0; i < statsLista.length; i++) {
@@ -438,8 +421,7 @@ function setupSalvarTextos() {
             .eq('id', s.id);
         } else {
           const { data } = await supabase.from('stats')
-            .insert({ numero: s.numero, label: s.label, ordem: i + 1 })
-            .select();
+            .insert({ numero: s.numero, label: s.label, ordem: i + 1 }).select();
           if (data?.[0]) statsLista[i].id = data[0].id;
         }
       }
@@ -460,8 +442,7 @@ function setupSalvarTextos() {
 // SERVIÇOS
 // ==========================================
 async function carregarServicosAdmin() {
-  const { data } = await supabase
-    .from('servicos').select('*').order('ordem');
+  const { data } = await supabase.from('servicos').select('*').order('ordem');
   servicosLista = (data || []).map(s => ({ ...s }));
   renderizarServicosAdmin();
 }
@@ -471,8 +452,7 @@ function renderizarServicosAdmin() {
   if (!el) return;
   if (!servicosLista.length) {
     el.innerHTML = `<div class="admin-vazio">
-      <i class="fas fa-concierge-bell"></i>
-      <p>Nenhum serviço.</p></div>`;
+      <i class="fas fa-concierge-bell"></i><p>Nenhum serviço.</p></div>`;
     return;
   }
   el.innerHTML = servicosLista.map((s, i) => `
@@ -491,8 +471,7 @@ function renderizarServicosAdmin() {
         </div>
         <div class="field">
           <label>Ícone (Font Awesome)</label>
-          <input type="text" value="${s.icone || ''}"
-                 placeholder="fas fa-palette"
+          <input type="text" value="${s.icone || ''}" placeholder="fas fa-palette"
                  oninput="servicosLista[${i}].icone=this.value"/>
         </div>
         <div class="field full">
@@ -514,8 +493,7 @@ function renderizarServicosAdmin() {
         </div>
         <div class="field">
           <label>Badge texto</label>
-          <input type="text" value="${s.badge_texto || ''}"
-                 placeholder="⭐ Mais Popular"
+          <input type="text" value="${s.badge_texto || ''}" placeholder="⭐ Mais Popular"
                  oninput="servicosLista[${i}].badge_texto=this.value"/>
         </div>
       </div>
@@ -540,9 +518,7 @@ function renderizarServicosAdmin() {
 window.removerServico = async function(i) {
   if (!confirm('Remover este serviço?')) return;
   const item = servicosLista[i];
-  if (item.id) {
-    await supabase.from('servicos').delete().eq('id', item.id);
-  }
+  if (item.id) await supabase.from('servicos').delete().eq('id', item.id);
   servicosLista.splice(i, 1);
   renderizarServicosAdmin();
   notif('🗑️ Serviço removido!');
@@ -588,14 +564,9 @@ function setupBotoesServicos() {
       for (let i = 0; i < servicosLista.length; i++) {
         const s = servicosLista[i];
         const dados = {
-          titulo: s.titulo,
-          descricao: s.descricao,
-          icone: s.icone,
-          cor: s.cor,
-          destaque: s.destaque || false,
-          badge_texto: s.badge_texto || '',
-          tags: s.tags || [],
-          ordem: i + 1
+          titulo: s.titulo, descricao: s.descricao, icone: s.icone,
+          cor: s.cor, destaque: s.destaque || false,
+          badge_texto: s.badge_texto || '', tags: s.tags || [], ordem: i + 1
         };
         if (s.id) {
           await supabase.from('servicos').update(dados).eq('id', s.id);
@@ -617,11 +588,10 @@ function setupBotoesServicos() {
 }
 
 // ==========================================
-// PREÇOS
+// PREÇOS - ATUALIZADO
 // ==========================================
 async function carregarPrecosAdmin() {
-  const { data } = await supabase
-    .from('precos').select('*').order('ordem');
+  const { data } = await supabase.from('precos').select('*').order('ordem');
   precosLista = (data || []).map(p => ({ ...p }));
   renderizarPrecosAdmin();
 }
@@ -631,46 +601,103 @@ function renderizarPrecosAdmin() {
   if (!el) return;
   if (!precosLista.length) {
     el.innerHTML = `<div class="admin-vazio">
-      <i class="fas fa-tags"></i>
-      <p>Nenhum preço.</p></div>`;
+      <i class="fas fa-tags"></i><p>Nenhum preço.</p></div>`;
     return;
   }
   el.innerHTML = precosLista.map((p, i) => `
-    <div class="preco-edit-item">
-      <div class="field" style="margin:0">
-        <label style="font-size:11px">Emoji</label>
-        <input type="text" value="${p.icone || ''}" maxlength="4"
-               style="text-align:center"
-               oninput="precosLista[${i}].icone=this.value"/>
+    <div class="preco-edit-item-novo">
+      <div class="preco-edit-preview">
+        <div class="preco-icon-preview" style="background:${p.cor || 'linear-gradient(135deg,#7c3aed,#a855f7)'}">
+          <i class="${p.icone || 'fas fa-star'}"></i>
+        </div>
+        <span>${p.nome || 'Sem nome'}</span>
       </div>
-      <div class="field" style="margin:0">
-        <label style="font-size:11px">Nome</label>
-        <input type="text" value="${p.nome || ''}"
-               oninput="precosLista[${i}].nome=this.value"/>
+      <div class="form-grid">
+        <div class="field">
+          <label>Nome</label>
+          <input type="text" value="${p.nome || ''}"
+                 oninput="precosLista[${i}].nome=this.value;atualizarPreviewPreco(${i})"/>
+        </div>
+        <div class="field">
+          <label>Valor</label>
+          <input type="text" value="${p.valor || ''}"
+                 oninput="precosLista[${i}].valor=this.value"/>
+        </div>
+        <div class="field">
+          <label>Ícone Font Awesome</label>
+          <div class="icone-fa-wrap">
+            <input type="text" value="${p.icone || 'fas fa-star'}"
+                   placeholder="fas fa-star"
+                   oninput="precosLista[${i}].icone=this.value;atualizarPreviewPreco(${i})"/>
+            <div class="icone-fa-preview" id="iconPreview-${i}">
+              <i class="${p.icone || 'fas fa-star'}"></i>
+            </div>
+          </div>
+          <small>Ex: fas fa-crown, fas fa-film, fas fa-image</small>
+        </div>
+        <div class="field">
+          <label>Cor do ícone</label>
+          <div class="preco-cor-wrap">
+            <input type="color" id="precoCor1-${i}"
+                   value="${extrairCorInicio(p.cor)}"
+                   oninput="atualizarCorPreco(${i})"/>
+            <span>→</span>
+            <input type="color" id="precoCor2-${i}"
+                   value="${extrairCorFim(p.cor)}"
+                   oninput="atualizarCorPreco(${i})"/>
+            <div class="preco-cor-preview" id="corPreview-${i}"
+                 style="background:${p.cor || 'linear-gradient(135deg,#7c3aed,#a855f7)'}"></div>
+          </div>
+          <small>Gradiente do quadrado</small>
+        </div>
+        <div class="field full">
+          <label>Observação</label>
+          <input type="text" value="${p.obs || ''}"
+                 oninput="precosLista[${i}].obs=this.value"/>
+        </div>
       </div>
-      <div class="field" style="margin:0">
-        <label style="font-size:11px">Valor</label>
-        <input type="text" value="${p.valor || ''}"
-               oninput="precosLista[${i}].valor=this.value"/>
-      </div>
-      <div class="field" style="margin:0">
-        <label style="font-size:11px">Obs</label>
-        <input type="text" value="${p.obs || ''}"
-               oninput="precosLista[${i}].obs=this.value"/>
-      </div>
-      <button class="btn-remove-item" onclick="removerPreco(${i})">
-        <i class="fas fa-trash"></i>
+      <button class="btn-remove-item" onclick="removerPreco(${i})"
+              style="margin-top:10px">
+        <i class="fas fa-trash"></i> Remover
       </button>
     </div>
   `).join('');
 }
 
+function extrairCorInicio(cor) {
+  if (!cor) return '#7c3aed';
+  const match = cor.match(/#[0-9a-fA-F]{6}/g);
+  return match ? match[0] : '#7c3aed';
+}
+
+function extrairCorFim(cor) {
+  if (!cor) return '#a855f7';
+  const match = cor.match(/#[0-9a-fA-F]{6}/g);
+  return match && match[1] ? match[1] : '#a855f7';
+}
+
+window.atualizarCorPreco = function(i) {
+  const cor1 = document.getElementById(`precoCor1-${i}`).value;
+  const cor2 = document.getElementById(`precoCor2-${i}`).value;
+  const gradiente = `linear-gradient(135deg,${cor1},${cor2})`;
+  precosLista[i].cor = gradiente;
+  const preview = document.getElementById(`corPreview-${i}`);
+  if (preview) preview.style.background = gradiente;
+  const iconBox = document.querySelector(`.preco-edit-item-novo:nth-child(${i + 1}) .preco-icon-preview`);
+  if (iconBox) iconBox.style.background = gradiente;
+};
+
+window.atualizarPreviewPreco = function(i) {
+  const iconEl = document.getElementById(`iconPreview-${i}`);
+  if (iconEl) iconEl.innerHTML = `<i class="${precosLista[i].icone || 'fas fa-star'}"></i>`;
+  const nomeEl = document.querySelector(`.preco-edit-item-novo:nth-child(${i + 1}) .preco-edit-preview span`);
+  if (nomeEl) nomeEl.textContent = precosLista[i].nome || 'Sem nome';
+};
+
 window.removerPreco = async function(i) {
   if (!confirm('Remover?')) return;
   const item = precosLista[i];
-  if (item.id) {
-    await supabase.from('precos').delete().eq('id', item.id);
-  }
+  if (item.id) await supabase.from('precos').delete().eq('id', item.id);
   precosLista.splice(i, 1);
   renderizarPrecosAdmin();
   notif('🗑️ Preço removido!');
@@ -679,13 +706,16 @@ window.removerPreco = async function(i) {
 function setupBotoesPrecos() {
   document.getElementById('btnNovoPreco').addEventListener('click', () => {
     precosLista.push({
-      icone: '🎨',
+      icone: 'fas fa-star',
+      cor: 'linear-gradient(135deg,#7c3aed,#a855f7)',
       nome: 'Novo Serviço',
       valor: 'R$ 0,00',
       obs: '',
       ordem: precosLista.length + 1
     });
     renderizarPrecosAdmin();
+    document.getElementById('precosAdminLista')
+      .lastElementChild?.scrollIntoView({ behavior: 'smooth' });
   });
 
   document.getElementById('salvarPrecos').addEventListener('click', async () => {
@@ -697,6 +727,7 @@ function setupBotoesPrecos() {
         const p = precosLista[i];
         const dados = {
           icone: p.icone,
+          cor: p.cor || 'linear-gradient(135deg,#7c3aed,#a855f7)',
           nome: p.nome,
           valor: p.valor,
           obs: p.obs || '',
@@ -726,14 +757,10 @@ function setupBotoesPrecos() {
 // ==========================================
 async function carregarContatoAdmin() {
   const { data: config } = await supabase
-    .from('site_config')
-    .select('discord')
-    .eq('id', 'config')
-    .single();
+    .from('site_config').select('discord').eq('id', 'config').single();
   if (config) setValue('cDiscord', config.discord || '');
 
-  const { data } = await supabase
-    .from('contato_info').select('*').order('ordem');
+  const { data } = await supabase.from('contato_info').select('*').order('ordem');
   infoItems = (data || []).map(i => ({ ...i }));
   renderizarInfoEditor();
 }
@@ -768,9 +795,7 @@ function renderizarInfoEditor() {
 
 window.removerInfoItem = async function(i) {
   const item = infoItems[i];
-  if (item.id) {
-    await supabase.from('contato_info').delete().eq('id', item.id);
-  }
+  if (item.id) await supabase.from('contato_info').delete().eq('id', item.id);
   infoItems.splice(i, 1);
   renderizarInfoEditor();
   notif('🗑️ Item removido!');
@@ -779,10 +804,8 @@ window.removerInfoItem = async function(i) {
 function setupBotoesContato() {
   document.getElementById('addInfoItem').addEventListener('click', () => {
     infoItems.push({
-      icone: '💡',
-      titulo: 'Novo Item',
-      texto: 'Descrição aqui',
-      ordem: infoItems.length + 1
+      icone: '💡', titulo: 'Novo Item',
+      texto: 'Descrição aqui', ordem: infoItems.length + 1
     });
     renderizarInfoEditor();
   });
@@ -792,19 +815,15 @@ function setupBotoesContato() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      const { error: errDisc } = await supabase
-        .from('site_config')
-        .update({ discord: getValue('cDiscord') })
-        .eq('id', 'config');
+      const { error: errDisc } = await supabase.from('site_config')
+        .update({ discord: getValue('cDiscord') }).eq('id', 'config');
       if (errDisc) throw errDisc;
 
       for (let i = 0; i < infoItems.length; i++) {
         const item = infoItems[i];
         const dados = {
-          icone: item.icone,
-          titulo: item.titulo,
-          texto: item.texto,
-          ordem: i + 1
+          icone: item.icone, titulo: item.titulo,
+          texto: item.texto, ordem: i + 1
         };
         if (item.id) {
           await supabase.from('contato_info').update(dados).eq('id', item.id);
@@ -887,16 +906,13 @@ function setupAparencia() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     try {
-      const { error } = await supabase
-        .from('site_config')
-        .update({
-          cor_primaria: getValue('corPrimariaHex'),
-          cor_secundaria: getValue('corSecundariaHex'),
-          cor_fundo: getValue('corFundoHex'),
-          cor_texto: getValue('corTextoHex'),
-          logo_icone: getValue('logoIcone'),
-        })
-        .eq('id', 'config');
+      const { error } = await supabase.from('site_config').update({
+        cor_primaria: getValue('corPrimariaHex'),
+        cor_secundaria: getValue('corSecundariaHex'),
+        cor_fundo: getValue('corFundoHex'),
+        cor_texto: getValue('corTextoHex'),
+        logo_icone: getValue('logoIcone'),
+      }).eq('id', 'config');
       if (error) throw error;
       notif('✅ Aparência salva! Recarregue o site.');
     } catch(e) {
@@ -924,11 +940,8 @@ function setValue(id, val) {
 
 function formatCat(cat) {
   return {
-    logo: 'Logo',
-    thumbnail: 'Thumbnail',
-    banner: 'Banner',
-    fotoperfil: 'Foto de Perfil',
-    outro: 'Outro'
+    logo: 'Logo', thumbnail: 'Thumbnail', banner: 'Banner',
+    fotoperfil: 'Foto de Perfil', outro: 'Outro'
   }[cat] || cat;
 }
 
@@ -953,18 +966,14 @@ function notif(msg, tipo = 'ok') {
 }
 
 Object.defineProperty(window, 'servicosLista', {
-  get: () => servicosLista,
-  set: (v) => { servicosLista = v; }
+  get: () => servicosLista, set: (v) => { servicosLista = v; }
 });
 Object.defineProperty(window, 'precosLista', {
-  get: () => precosLista,
-  set: (v) => { precosLista = v; }
+  get: () => precosLista, set: (v) => { precosLista = v; }
 });
 Object.defineProperty(window, 'infoItems', {
-  get: () => infoItems,
-  set: (v) => { infoItems = v; }
+  get: () => infoItems, set: (v) => { infoItems = v; }
 });
 Object.defineProperty(window, 'statsLista', {
-  get: () => statsLista,
-  set: (v) => { statsLista = v; }
+  get: () => statsLista, set: (v) => { statsLista = v; }
 });
