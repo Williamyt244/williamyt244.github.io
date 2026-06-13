@@ -30,14 +30,46 @@ async function carregarConfig() {
     const { data } = await supabase.from('site_config').select('*').eq('id','config').single();
     if (!data) return;
 
+    // Logo
     if (data.logo_icone) {
       setText('logoIcone', data.logo_icone);
       setText('footerIcone', data.logo_icone);
     }
+
+    // Cores
     if (data.cor_primaria || data.cor_secundaria || data.cor_fundo || data.cor_texto) {
       aplicarCores(data);
     }
-    if (data.hero_badge) setText('heroBadge', data.hero_badge);
+
+    // Badge online/offline
+    const offline = data.offline || false;
+    const badgeTexto = offline
+      ? (data.hero_badge_offline || '🔴 Designer offline no momento')
+      : (data.hero_badge || '🚀 Designer disponível');
+
+    const badgeEl = document.getElementById('heroBadge');
+    const badgeDotEl = document.querySelector('.badge-dot');
+    const heroBadgeEl = document.querySelector('.hero-badge');
+
+    if (badgeEl) badgeEl.textContent = badgeTexto;
+
+    if (badgeDotEl && heroBadgeEl) {
+      if (offline) {
+        badgeDotEl.style.background = '#ef4444';
+        badgeDotEl.style.animation = 'none';
+        heroBadgeEl.style.background = 'rgba(239,68,68,0.1)';
+        heroBadgeEl.style.borderColor = 'rgba(239,68,68,0.3)';
+        heroBadgeEl.style.color = '#f87171';
+      } else {
+        badgeDotEl.style.background = '#10b981';
+        badgeDotEl.style.animation = '';
+        heroBadgeEl.style.background = '';
+        heroBadgeEl.style.borderColor = '';
+        heroBadgeEl.style.color = '';
+      }
+    }
+
+    // Textos gerais
     if (data.hero_titulo) setText('heroTitulo', data.hero_titulo);
     if (data.hero_titulo_destaque) setText('heroTituloDestaque', data.hero_titulo_destaque);
     if (data.hero_subtitulo) setText('heroSubtitulo', data.hero_subtitulo);
