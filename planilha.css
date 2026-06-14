@@ -1,0 +1,651 @@
+/* ===================================
+   PLANILHA CSS - WilliamDesign
+=================================== */
+
+/* LISTA DE PLANILHAS */
+.planilhas-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.planilha-card {
+  background: var(--dark-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+}
+
+.planilha-card:hover {
+  border-color: rgba(124,58,237,0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124,58,237,0.1);
+}
+
+.planilha-card-icon {
+  font-size: 28px;
+}
+
+.planilha-card-nome {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.planilha-card-info {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.planilha-card-acoes {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.planilha-card-acoes button {
+  flex: 1;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: var(--transition);
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.btn-abrir-planilha {
+  background: rgba(124,58,237,0.1);
+  border-color: rgba(124,58,237,0.25) !important;
+  color: var(--primary-light);
+}
+
+.btn-abrir-planilha:hover {
+  background: rgba(124,58,237,0.2);
+}
+
+.btn-del-planilha {
+  background: rgba(239,68,68,0.08);
+  border-color: rgba(239,68,68,0.2) !important;
+  color: #f87171;
+  flex: 0 0 auto !important;
+  width: 32px;
+}
+
+.btn-del-planilha:hover {
+  background: rgba(239,68,68,0.18);
+}
+
+/* NOVA PLANILHA FORM */
+.nova-planilha-form {
+  background: var(--dark-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.nova-planilha-form .field {
+  flex: 1;
+  min-width: 180px;
+  margin: 0;
+}
+
+/* TELA DA PLANILHA ABERTA */
+.planilha-tela {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  height: calc(100vh - 160px);
+}
+
+.planilha-tela.aberta {
+  display: flex;
+}
+
+.planilha-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.planilha-nome-edit {
+  font-size: 20px;
+  font-weight: 800;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  border-bottom: 2px solid transparent;
+  padding: 2px 6px;
+  transition: var(--transition);
+  min-width: 120px;
+}
+
+.planilha-nome-edit:focus {
+  border-bottom-color: var(--primary);
+}
+
+.planilha-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--dark-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-bottom: none;
+}
+
+.planilha-toolbar-sep {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.tb-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.tb-btn:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.tb-btn.danger:hover {
+  background: rgba(239,68,68,0.1);
+  color: #f87171;
+  border-color: rgba(239,68,68,0.2);
+}
+
+.tb-btn.primary {
+  background: rgba(124,58,237,0.1);
+  border-color: rgba(124,58,237,0.25);
+  color: var(--primary-light);
+}
+
+.tb-btn.primary:hover {
+  background: rgba(124,58,237,0.2);
+}
+
+/* BUSCA E FILTRO */
+.planilha-busca-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.planilha-busca {
+  background: var(--dark-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 7px 12px 7px 32px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  width: 200px;
+  transition: var(--transition);
+}
+
+.planilha-busca:focus {
+  border-color: rgba(124,58,237,0.5);
+  width: 260px;
+}
+
+.planilha-busca-wrap .search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.busca-wrap-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* CONTAINER DA TABELA */
+.planilha-table-wrap {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: var(--dark-2);
+  position: relative;
+}
+
+/* TABELA */
+.planilha-table {
+  border-collapse: collapse;
+  min-width: 100%;
+  font-size: 13px;
+}
+
+/* CABEÇALHO */
+.planilha-table thead tr {
+  background: var(--dark-3);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.planilha-table th {
+  padding: 0;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.th-inner {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 38px;
+}
+
+.th-label {
+  flex: 1;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  user-select: none;
+  transition: var(--transition);
+}
+
+.th-label:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.03);
+}
+
+.th-sort-icon {
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.th-sort-icon.ativo {
+  opacity: 1;
+  color: var(--primary-light);
+}
+
+.th-config-btn {
+  background: none;
+  border: none;
+  border-left: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 28px;
+  height: 100%;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.th-config-btn:hover {
+  background: rgba(124,58,237,0.15);
+  color: var(--primary-light);
+}
+
+/* NÚMERO DA LINHA */
+.th-num, .td-num {
+  width: 44px;
+  min-width: 44px !important;
+  max-width: 44px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  background: var(--dark-3);
+  border: 1px solid var(--border);
+  user-select: none;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+
+.th-num {
+  z-index: 11;
+}
+
+/* CÉLULAS */
+.planilha-table td {
+  border: 1px solid var(--border);
+  padding: 0;
+  height: 36px;
+  max-width: 300px;
+}
+
+.planilha-table tr:hover td:not(.td-num) {
+  background: rgba(124,58,237,0.04);
+}
+
+.planilha-table tr.linha-selecionada td:not(.td-num) {
+  background: rgba(124,58,237,0.08);
+}
+
+.cell-input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 0 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  cursor: default;
+}
+
+.cell-input:focus {
+  cursor: text;
+  background: rgba(124,58,237,0.08);
+  box-shadow: inset 0 0 0 2px rgba(124,58,237,0.5);
+}
+
+.cell-input[data-tipo="numero"] {
+  text-align: right;
+}
+
+.cell-input[data-tipo="formula"] {
+  text-align: right;
+  color: var(--primary-light);
+  cursor: default;
+  pointer-events: none;
+}
+
+.cell-input[data-tipo="data"] {
+  cursor: text;
+}
+
+/* LINHA DE FÓRMULA TOTAL */
+.linha-formula-total td {
+  background: var(--dark-3) !important;
+  border-top: 2px solid rgba(124,58,237,0.3) !important;
+}
+
+.total-cell {
+  text-align: right;
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-light);
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.total-cell.negativo {
+  color: #f87171;
+}
+
+.total-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0 10px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+}
+
+/* MODAL DE CONFIGURAÇÃO DE COLUNA */
+.col-config-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.col-config-modal.aberto {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.col-config-box {
+  background: var(--dark-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  width: 100%;
+  max-width: 440px;
+  transform: scale(0.95);
+  transition: transform 0.2s ease;
+}
+
+.col-config-modal.aberto .col-config-box {
+  transform: scale(1);
+}
+
+.col-config-titulo {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.col-config-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.col-tipo-opcoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.col-tipo-btn {
+  background: var(--dark-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  padding: 10px 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  transition: var(--transition);
+}
+
+.col-tipo-btn i {
+  font-size: 16px;
+}
+
+.col-tipo-btn:hover,
+.col-tipo-btn.selecionado {
+  background: rgba(124,58,237,0.15);
+  border-color: rgba(124,58,237,0.4);
+  color: var(--primary-light);
+}
+
+/* FORMULA CONFIG */
+.formula-config {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--dark-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-top: 4px;
+}
+
+.formula-config.visivel {
+  display: flex;
+}
+
+.formula-config label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.formula-config select,
+.formula-config input {
+  background: var(--dark-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  transition: var(--transition);
+}
+
+.formula-config select:focus,
+.formula-config input:focus {
+  border-color: rgba(124,58,237,0.5);
+}
+
+.formula-doc {
+  background: rgba(124,58,237,0.08);
+  border: 1px solid rgba(124,58,237,0.2);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.formula-doc strong {
+  color: var(--primary-light);
+}
+
+/* MODAL RENOMEAR PLANILHA */
+.renomear-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.renomear-modal.aberto {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* LINHA VAZIA */
+.linha-vazia-msg {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* STATUS BAR */
+.planilha-statusbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 14px;
+  background: var(--dark-3);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.statusbar-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.statusbar-item strong {
+  color: var(--primary-light);
+}
+
+/* ORDENAÇÃO */
+.th-label.ordenado-asc .th-sort-icon::after { content: ' ↑'; }
+.th-label.ordenado-desc .th-sort-icon::after { content: ' ↓'; }
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  .planilha-tela {
+    height: auto;
+  }
+  .planilha-busca {
+    width: 140px;
+  }
+  .planilha-busca:focus {
+    width: 180px;
+  }
+  .tb-btn span {
+    display: none;
+  }
+}
