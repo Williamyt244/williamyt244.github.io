@@ -333,6 +333,9 @@ async function carregarTextosAdmin() {
 
   setValue('tNomeSite', data.nomesite || '');
   setValue('tHeroBadge', data.hero_badge || '');
+  setValue('tHeroBadgeOffline', data.hero_badge_offline || '');
+const offlineCheck = document.getElementById('tHeroOffline');
+if (offlineCheck) offlineCheck.checked = data.hero_offline || false;
   setValue('tHeroTitulo', data.hero_titulo || '');
   setValue('tHeroDestaque', data.hero_titulo_destaque || '');
   setValue('tHeroSub', data.hero_subtitulo || '');
