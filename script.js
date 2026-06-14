@@ -21,7 +21,6 @@ async function carregarSite() {
     carregarPrecos(),
     carregarContato(),
   ]);
-  // Roda POR ÚLTIMO, depois de tudo carregado
   await carregarEstilosCustomizados();
 }
 
@@ -37,7 +36,25 @@ async function carregarConfig() {
     if (data.cor_primaria || data.cor_secundaria || data.cor_fundo || data.cor_texto) {
       aplicarCores(data);
     }
-    if (data.hero_badge) setText('heroBadge', data.hero_badge);
+
+    // ── BADGE ONLINE / OFFLINE ──
+    const isOffline = data.hero_offline || false;
+    const badgeTexto = isOffline
+      ? (data.hero_badge_offline || '❌ Designer offline no momento')
+      : (data.hero_badge || '🚀 Designer disponível');
+
+    setText('heroBadge', badgeTexto);
+
+    const badgeEl = document.querySelector('.hero-badge');
+    if (badgeEl) {
+      if (isOffline) {
+        badgeEl.classList.add('hero-badge--offline');
+      } else {
+        badgeEl.classList.remove('hero-badge--offline');
+      }
+    }
+    // ────────────────────────────
+
     if (data.hero_titulo) setText('heroTitulo', data.hero_titulo);
     if (data.hero_titulo_destaque) setText('heroTituloDestaque', data.hero_titulo_destaque);
     if (data.hero_subtitulo) setText('heroSubtitulo', data.hero_subtitulo);
