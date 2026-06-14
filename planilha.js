@@ -23,10 +23,26 @@ export function inicializarPlanilha() {
 // CARREGAR LISTA DE PLANILHAS
 // ==========================================
 async function carregarPlanilhas() {
-  const { data } = await supabase
+  // Verificar se há sessão ativa
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    console.error('Sem sessão ativa!');
+    notifP('❌ Sessão expirada. Faça login novamente.', 'erro');
+    return;
+  }
+
+  const { data, error } = await supabase
     .from('planilhas')
     .select('*')
     .order('criado_em', { ascending: false });
+
+  if (error) {
+    console.error('Erro ao carregar planilhas:', error);
+    notifP('❌ Erro ao carregar planilhas!', 'erro');
+    return;
+  }
+
   planilhas = data || [];
   renderizarListaPlanilhas();
 }
