@@ -1,3 +1,4 @@
+import { inicializarPlanilha } from './planilha.js';
 import { supabase } from './supabase-config.js';
 import { inicializarEditor } from './editor.js';
 
