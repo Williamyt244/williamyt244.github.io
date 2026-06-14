@@ -17,12 +17,10 @@ export function inicializarPlanilha() {
   setupNovaPlanilha();
   setupColConfigModal();
 
-  // Aguarda sessão estar pronta antes de carregar
   supabase.auth.getSession().then(({ data: { session } }) => {
     if (session) {
       carregarPlanilhas();
     } else {
-      // Tenta novamente em 1 segundo
       setTimeout(() => {
         supabase.auth.getSession().then(({ data: { session: s } }) => {
           if (s) carregarPlanilhas();
@@ -38,7 +36,6 @@ export function inicializarPlanilha() {
 // ==========================================
 async function carregarPlanilhas() {
   const { data: { session } } = await supabase.auth.getSession();
-
   if (!session) {
     notifP('❌ Sessão expirada. Faça login novamente.', 'erro');
     return;
@@ -75,7 +72,7 @@ function renderizarListaPlanilhas() {
   el.innerHTML = planilhas.map(p => `
     <div class="planilha-card">
       <div class="planilha-card-icon">📊</div>
-      <div class="planilha-card-nome">${p.nome}</div>
+      <div class="planilha-card-nome">${escaparHTML(p.nome)}</div>
       <div class="planilha-card-info">
         ${(p.colunas || []).length} coluna(s) •
         Criada em ${formatarData(p.criado_em)}
@@ -149,6 +146,9 @@ window.abrirPlanilha = async function(id) {
 
   linhas = data || [];
 
+  // Garantir que todas as linhas têm ordem correta
+  linhas.forEach((l, i) => { l.ordem = i + 1; });
+
   document.getElementById('planilhasHome').style.display = 'none';
   const tela = document.getElementById('planilhaTela');
   tela.classList.add('aberta');
@@ -171,6 +171,39 @@ window.fecharPlanilha = function() {
   planilhaAtual = null;
   linhas = [];
   colunas = [];
+  ordemCol = null;
+  termoBusca = '';
+};
+
+// ==========================================
+// MOVER LINHA (↑ ↓)
+// ==========================================
+window.moverLinha = async function(linhaId, direcao) {
+  const idx = linhas.findIndex(l => l.id === linhaId);
+  if (idx === -1) return;
+
+  const novoIdx = direcao === 'cima' ? idx - 1 : idx + 1;
+  if (novoIdx < 0 || novoIdx >= linhas.length) return;
+
+  // Trocar posições no array
+  const temp = linhas[idx];
+  linhas[idx] = linhas[novoIdx];
+  linhas[novoIdx] = temp;
+
+  // Atualizar campo ordem
+  linhas.forEach((l, i) => { l.ordem = i + 1; });
+
+  // Salvar no Supabase
+  await Promise.all([
+    supabase.from('planilha_linhas')
+      .update({ ordem: linhas[idx].ordem })
+      .eq('id', linhas[idx].id),
+    supabase.from('planilha_linhas')
+      .update({ ordem: linhas[novoIdx].ordem })
+      .eq('id', linhas[novoIdx].id),
+  ]);
+
+  renderizarTabela();
 };
 
 // ==========================================
@@ -180,6 +213,7 @@ function renderizarTabela() {
   const wrap = document.getElementById('planilhaTableWrap');
   if (!wrap) return;
 
+  // Aplicar busca (só quando não estiver ordenando por coluna)
   let linhasFiltradas = [...linhas];
   if (termoBusca) {
     linhasFiltradas = linhasFiltradas.filter(l =>
@@ -189,13 +223,32 @@ function renderizarTabela() {
     );
   }
 
+  // Aplicar ordenação por coluna (se ativa)
   if (ordemCol) {
     linhasFiltradas.sort((a, b) => {
-      const va = a.dados?.[ordemCol.colId] ?? '';
-      const vb = b.dados?.[ordemCol.colId] ?? '';
-      const na = parseFloat(va), nb = parseFloat(vb);
+      let va = a.dados?.[ordemCol.colId] ?? '';
+      let vb = b.dados?.[ordemCol.colId] ?? '';
+
+      // Extrair número de valores monetários (ex: "R$: 31,00" → 31)
+      va = extrairNumero(va);
+      vb = extrairNumero(vb);
+
+      const na = parseFloat(String(va).replace(',', '.'));
+      const nb = parseFloat(String(vb).replace(',', '.'));
       const numerico = !isNaN(na) && !isNaN(nb);
-      const cmp = numerico ? na - nb : String(va).localeCompare(String(vb));
+
+      let cmp;
+      if (numerico) {
+        cmp = na - nb;
+      } else {
+        // Ordenação de datas
+        const da = new Date(va), db = new Date(vb);
+        if (!isNaN(da) && !isNaN(db)) {
+          cmp = da - db;
+        } else {
+          cmp = String(va).localeCompare(String(vb), 'pt-BR');
+        }
+      }
       return ordemCol.direcao === 'asc' ? cmp : -cmp;
     });
   }
@@ -210,15 +263,21 @@ function renderizarTabela() {
     return;
   }
 
+  // Verificar se tem coluna com soma total
   const temTotal = colunas.some(c =>
     (c.tipo === 'formula' && c.formula?.totalizar) ||
-    (c.tipo === 'numero' && c.somarTotal)
+    (c.tipo === 'numero' && c.somarTotal) ||
+    (c.tipo === 'texto' && c.somarTotal)
   );
+
+  // Botões de mover só aparecem se não tiver filtro/ordenação ativa
+  const mostrarBotoesMover = !ordemCol && !termoBusca;
 
   let html = `<table class="planilha-table" id="planilhaTable">
     <thead>
       <tr>
         <th class="th-num">#</th>
+        ${mostrarBotoesMover ? '<th style="width:64px;min-width:64px;background:var(--dark-3);border:1px solid var(--border);text-align:center"><span style="font-size:11px;color:var(--text-muted)">Mover</span></th>' : ''}
         ${colunas.map((col, ci) => {
           const icone = iconeTipo(col.tipo);
           const sortAtivo = ordemCol?.colId === col.id;
@@ -250,9 +309,10 @@ function renderizarTabela() {
     <tbody>`;
 
   if (!linhasFiltradas.length) {
+    const colspan = colunas.length + (mostrarBotoesMover ? 3 : 2);
     html += `<tr>
       <td class="td-num">—</td>
-      <td colspan="${colunas.length + 1}">
+      <td colspan="${colspan}">
         <div class="linha-vazia-msg">
           ${termoBusca
             ? `Nenhum resultado para "<strong>${escaparHTML(termoBusca)}</strong>"`
@@ -262,14 +322,46 @@ function renderizarTabela() {
     </tr>`;
   } else {
     linhasFiltradas.forEach((linha, li) => {
+      const ehPrimeira = li === 0;
+      const ehUltima = li === linhasFiltradas.length - 1;
+
       html += `<tr data-id="${linha.id}" onclick="selecionarLinha(this)">
         <td class="td-num">${li + 1}</td>
+        ${mostrarBotoesMover ? `
+        <td style="border:1px solid var(--border);padding:0;width:64px;min-width:64px">
+          <div style="display:flex;flex-direction:column;height:36px">
+            <button
+              onclick="event.stopPropagation();moverLinha('${linha.id}','cima')"
+              style="flex:1;background:none;border:none;border-bottom:1px solid var(--border);
+                     color:${ehPrimeira ? 'rgba(255,255,255,0.1)' : 'var(--text-muted)'};
+                     cursor:${ehPrimeira ? 'default' : 'pointer'};font-size:9px;
+                     transition:all 0.2s;display:flex;align-items:center;justify-content:center"
+              ${ehPrimeira ? 'disabled' : ''}
+              title="Mover para cima"
+              onmouseover="if(!this.disabled)this.style.background='rgba(124,58,237,0.15)';if(!this.disabled)this.style.color='var(--primary-light)'"
+              onmouseout="this.style.background='none';this.style.color='${ehPrimeira ? 'rgba(255,255,255,0.1)' : 'var(--text-muted)'}'">
+              <i class="fas fa-chevron-up"></i>
+            </button>
+            <button
+              onclick="event.stopPropagation();moverLinha('${linha.id}','baixo')"
+              style="flex:1;background:none;border:none;
+                     color:${ehUltima ? 'rgba(255,255,255,0.1)' : 'var(--text-muted)'};
+                     cursor:${ehUltima ? 'default' : 'pointer'};font-size:9px;
+                     transition:all 0.2s;display:flex;align-items:center;justify-content:center"
+              ${ehUltima ? 'disabled' : ''}
+              title="Mover para baixo"
+              onmouseover="if(!this.disabled)this.style.background='rgba(124,58,237,0.15)';if(!this.disabled)this.style.color='var(--primary-light)'"
+              onmouseout="this.style.background='none';this.style.color='${ehUltima ? 'rgba(255,255,255,0.1)' : 'var(--text-muted)'}'">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </div>
+        </td>` : ''}
         ${colunas.map(col => {
           if (col.tipo === 'formula') {
             const resultado = calcularFormulaCelula(col, linha, li, linhasFiltradas);
             const negativo = parseFloat(resultado) < 0;
             return `<td>
-              <input class="cell-input ${negativo ? 'negativo' : ''}"
+              <input class="cell-input${negativo ? ' negativo' : ''}"
                      data-tipo="formula"
                      value="${escaparHTML(String(formatarValor(resultado, col)))}"
                      readonly tabindex="-1"/>
@@ -289,7 +381,7 @@ function renderizarTabela() {
         }).join('')}
         <td style="border:1px solid var(--border)">
           <button class="tb-btn danger"
-                  onclick="deletarLinha('${linha.id}')"
+                  onclick="event.stopPropagation();deletarLinha('${linha.id}')"
                   style="width:100%;justify-content:center;padding:6px;font-size:11px"
                   title="Excluir linha">
             <i class="fas fa-trash"></i>
@@ -299,13 +391,16 @@ function renderizarTabela() {
     });
   }
 
-  // Linha de totais
+  // ── LINHA DE TOTAIS ──
   if (temTotal && linhasFiltradas.length) {
+    const colspan_mover = mostrarBotoesMover ? '<td style="border:1px solid var(--border);background:var(--dark-3)"></td>' : '';
     html += `<tr class="linha-formula-total">
       <td class="td-num">
-        <span style="padding:0 10px;display:flex;align-items:center;justify-content:center;height:36px;font-size:10px">Σ</span>
+        <span style="padding:0 10px;display:flex;align-items:center;justify-content:center;height:36px;font-size:11px;font-weight:700">Σ</span>
       </td>
+      ${colspan_mover}
       ${colunas.map(col => {
+        // Coluna fórmula com totalizar
         if (col.tipo === 'formula' && col.formula?.totalizar) {
           const total = linhasFiltradas.reduce((acc, l, li) => {
             const v = parseFloat(calcularFormulaCelula(col, l, li, linhasFiltradas));
@@ -317,6 +412,7 @@ function renderizarTabela() {
             </div>
           </td>`;
         }
+        // Coluna número com somarTotal
         if (col.tipo === 'numero' && col.somarTotal) {
           const total = linhasFiltradas.reduce((acc, l) => {
             const v = parseFloat(l.dados?.[col.id] || 0);
@@ -328,15 +424,45 @@ function renderizarTabela() {
             </div>
           </td>`;
         }
+        // Coluna texto com somarTotal (valores monetários "R$: X,XX")
+        if (col.tipo === 'texto' && col.somarTotal) {
+          const total = linhasFiltradas.reduce((acc, l) => {
+            const raw = String(l.dados?.[col.id] || '');
+            const num = extrairNumero(raw);
+            const v = parseFloat(String(num).replace(',', '.'));
+            return acc + (isNaN(v) ? 0 : v);
+          }, 0);
+          return `<td>
+            <div class="total-cell ${total < 0 ? 'negativo' : ''}">
+              Total R$: ${formatarMoeda(total)}
+            </div>
+          </td>`;
+        }
         return `<td><div class="total-label">—</div></td>`;
       }).join('')}
-      <td style="border:1px solid var(--border)"></td>
+      <td style="border:1px solid var(--border);background:var(--dark-3)"></td>
     </tr>`;
   }
 
   html += `</tbody></table>`;
   wrap.innerHTML = html;
   atualizarStatusBar(linhasFiltradas);
+}
+
+// ==========================================
+// EXTRAIR NÚMERO DE STRING MONETÁRIA
+// ==========================================
+function extrairNumero(str) {
+  if (!str) return 0;
+  // Remove "R$:", "R$", espaços, pontos de milhar e troca vírgula por ponto
+  const limpo = String(str)
+    .replace(/R\$\s*:?\s*/gi, '')
+    .replace(/Total\s*/gi, '')
+    .replace(/\./g, '')
+    .replace(',', '.')
+    .trim();
+  const num = parseFloat(limpo);
+  return isNaN(num) ? str : num;
 }
 
 // ==========================================
@@ -348,10 +474,12 @@ function calcularFormulaCelula(col, linha, li, todasLinhas) {
 
   function getVal(colId, constante) {
     if (colId) {
-      const v = parseFloat(linha.dados?.[colId] ?? 0);
+      const raw = linha.dados?.[colId] ?? 0;
+      const num = extrairNumero(raw);
+      const v = parseFloat(String(num).replace(',', '.'));
       return isNaN(v) ? 0 : v;
     }
-    const v = parseFloat(constante ?? 0);
+    const v = parseFloat(String(constante ?? 0).replace(',', '.'));
     return isNaN(v) ? 0 : v;
   }
 
@@ -366,7 +494,9 @@ function calcularFormulaCelula(col, linha, li, todasLinhas) {
     case 'percentual':    return b !== 0 ? ((a / b) * 100).toFixed(2) + '%' : 'Erro';
     case 'acumulado': {
       const total = todasLinhas.slice(0, li + 1).reduce((acc, l) => {
-        const v = parseFloat(l.dados?.[f.colA] ?? 0);
+        const raw = l.dados?.[f.colA] ?? 0;
+        const num = extrairNumero(raw);
+        const v = parseFloat(String(num).replace(',', '.'));
         return acc + (isNaN(v) ? 0 : v);
       }, 0);
       return total.toFixed(2);
@@ -415,7 +545,6 @@ window.abrirColConfig = function(ci) {
     popularSelectsColunas(ci);
     const f = col.formula || {};
     document.getElementById('fOperacao').value = f.operacao || 'soma';
-
     const useColA = !!f.colA;
     const useColB = !!f.colB;
     document.getElementById('fUseColA').checked = useColA;
@@ -435,14 +564,15 @@ window.abrirColConfig = function(ci) {
 };
 
 function popularSelectsColunas(ciAtual) {
-  const colsNumericas = colunas.filter((c, i) =>
-    i !== ciAtual && c.tipo === 'numero'
+  // Incluir colunas numéricas E colunas de texto (que podem ter valores monetários)
+  const colsValor = colunas.filter((c, i) =>
+    i !== ciAtual && (c.tipo === 'numero' || c.tipo === 'texto')
   );
   ['fColA', 'fColB'].forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
     sel.innerHTML = `<option value="">— Selecione a coluna —</option>` +
-      colsNumericas.map(c =>
+      colsValor.map(c =>
         `<option value="${c.id}">${escaparHTML(c.nome)}</option>`
       ).join('');
   });
@@ -457,7 +587,6 @@ window.toggleColunaOuConstante = function(letra) {
 };
 
 function setupColConfigModal() {
-  // Tipos de coluna
   document.querySelectorAll('.col-tipo-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.col-tipo-btn').forEach(b => b.classList.remove('selecionado'));
@@ -472,7 +601,6 @@ function setupColConfigModal() {
     });
   });
 
-  // Fechar modal
   const btnFechar = document.getElementById('btnFecharColConfig');
   if (btnFechar) btnFechar.addEventListener('click', fecharColConfig);
 
@@ -483,11 +611,9 @@ function setupColConfigModal() {
     });
   }
 
-  // Salvar
   const btnSalvar = document.getElementById('btnSalvarColConfig');
   if (btnSalvar) btnSalvar.addEventListener('click', salvarColConfig);
 
-  // Deletar coluna
   const btnDel = document.getElementById('btnDeletarColuna');
   if (btnDel) {
     btnDel.addEventListener('click', () => {
@@ -500,16 +626,16 @@ function setupColConfigModal() {
     });
   }
 
-  // Busca
   const busca = document.getElementById('planilhaBusca');
   if (busca) {
     busca.addEventListener('input', e => {
       termoBusca = e.target.value;
+      // Desativar ordenação ao buscar para não confundir
+      if (termoBusca) ordemCol = null;
       renderizarTabela();
     });
   }
 
-  // Renomear planilha
   const nomeEdit = document.getElementById('planilhaNomeEdit');
   if (nomeEdit) {
     nomeEdit.addEventListener('change', async e => {
@@ -565,11 +691,17 @@ function fecharColConfig() {
 }
 
 // ==========================================
-// ORDENAR
+// ORDENAR POR COLUNA
 // ==========================================
 window.ordenarPor = function(colId) {
+  // Desativar botões de mover quando ordenação está ativa
   if (ordemCol?.colId === colId) {
-    ordemCol.direcao = ordemCol.direcao === 'asc' ? 'desc' : 'asc';
+    if (ordemCol.direcao === 'asc') {
+      ordemCol.direcao = 'desc';
+    } else {
+      // Terceiro clique: desativar ordenação
+      ordemCol = null;
+    }
   } else {
     ordemCol = { colId, direcao: 'asc' };
   }
@@ -622,24 +754,23 @@ window.alterarCelula = async function(linhaId, colId, valor) {
     .update({ dados: linha.dados })
     .eq('id', linhaId);
 
-  // Atualizar só as células de fórmula sem re-renderizar tudo
+  // Atualizar células de fórmula sem re-renderizar tudo
   const colsFormula = colunas.filter(c => c.tipo === 'formula');
-  if (!colsFormula.length) return;
+  if (!colsFormula.length) {
+    atualizarStatusBar([...linhas]);
+    return;
+  }
 
   let linhasFiltradas = [...linhas];
-  if (termoBusca) {
-    linhasFiltradas = linhasFiltradas.filter(l =>
-      Object.values(l.dados || {}).some(v =>
-        String(v).toLowerCase().includes(termoBusca.toLowerCase())
-      )
-    );
-  }
   if (ordemCol) {
     linhasFiltradas.sort((a, b) => {
-      const va = a.dados?.[ordemCol.colId] ?? '';
-      const vb = b.dados?.[ordemCol.colId] ?? '';
-      const na = parseFloat(va), nb = parseFloat(vb);
-      const cmp = !isNaN(na) && !isNaN(nb) ? na - nb : String(va).localeCompare(String(vb));
+      let va = extrairNumero(a.dados?.[ordemCol.colId] ?? '');
+      let vb = extrairNumero(b.dados?.[ordemCol.colId] ?? '');
+      const na = parseFloat(String(va).replace(',', '.'));
+      const nb = parseFloat(String(vb).replace(',', '.'));
+      const cmp = !isNaN(na) && !isNaN(nb)
+        ? na - nb
+        : String(va).localeCompare(String(vb), 'pt-BR');
       return ordemCol.direcao === 'asc' ? cmp : -cmp;
     });
   }
@@ -656,7 +787,8 @@ window.alterarCelula = async function(linhaId, colId, valor) {
       const resultado = calcularFormulaCelula(c, l, li, linhasFiltradas);
       if (formulaInputs[fIdx]) {
         formulaInputs[fIdx].value = formatarValor(resultado, c);
-        formulaInputs[fIdx].className = `cell-input ${parseFloat(resultado) < 0 ? 'negativo' : ''}`;
+        const negativo = parseFloat(resultado) < 0;
+        formulaInputs[fIdx].className = `cell-input${negativo ? ' negativo' : ''}`;
       }
     });
   });
@@ -677,6 +809,10 @@ window.deletarLinha = async function(linhaId) {
   if (error) { notifP('❌ Erro ao deletar!', 'erro'); return; }
 
   linhas = linhas.filter(l => l.id !== linhaId);
+
+  // Reordenar após deletar
+  linhas.forEach((l, i) => { l.ordem = i + 1; });
+
   renderizarTabela();
   notifP('🗑️ Linha removida!');
 };
@@ -728,16 +864,33 @@ function atualizarStatusBar(linhasFiltradas) {
   if (!el) return;
 
   const somas = colunas
-    .filter(c => c.tipo === 'numero' && c.somarTotal)
+    .filter(c => c.somarTotal)
     .map(c => {
-      const total = linhasFiltradas.reduce((acc, l) => {
-        const v = parseFloat(l.dados?.[c.id] || 0);
-        return acc + (isNaN(v) ? 0 : v);
-      }, 0);
+      let total = 0;
+      if (c.tipo === 'numero') {
+        total = linhasFiltradas.reduce((acc, l) => {
+          const v = parseFloat(l.dados?.[c.id] || 0);
+          return acc + (isNaN(v) ? 0 : v);
+        }, 0);
+      } else if (c.tipo === 'texto') {
+        total = linhasFiltradas.reduce((acc, l) => {
+          const raw = String(l.dados?.[c.id] || '');
+          const num = extrairNumero(raw);
+          const v = parseFloat(String(num).replace(',', '.'));
+          return acc + (isNaN(v) ? 0 : v);
+        }, 0);
+      }
       return `<span class="statusbar-item">
-        Σ ${escaparHTML(c.nome)}: <strong>${formatarMoeda(total)}</strong>
+        Σ ${escaparHTML(c.nome)}: <strong>R$ ${formatarMoeda(total)}</strong>
       </span>`;
     }).join('');
+
+  const ordemInfo = ordemCol
+    ? `<span class="statusbar-item" style="color:var(--primary-light)">
+        <i class="fas fa-sort"></i> Ordenado por coluna
+        (clique 3x para remover)
+      </span>`
+    : '';
 
   el.innerHTML = `
     <span class="statusbar-item">
@@ -749,6 +902,7 @@ function atualizarStatusBar(linhasFiltradas) {
       <i class="fas fa-columns"></i>
       Colunas: <strong>${colunas.length}</strong>
     </span>
+    ${ordemInfo}
     ${somas}
   `;
 }
@@ -762,7 +916,7 @@ window.exportarCSV = function() {
     return;
   }
 
-  const header = colunas.map(c => `"${c.nome}"`).join(',');
+  const header = colunas.map(c => `"${escaparHTML(c.nome)}"`).join(',');
   const rows = linhas.map((l, li) =>
     colunas.map(col => {
       if (col.tipo === 'formula') {
