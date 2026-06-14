@@ -61,6 +61,7 @@
         <button class="nav-btn" data-aba="contato"><i class="fas fa-headset"></i> Contato</button>
         <button class="nav-btn" data-aba="aparencia"><i class="fas fa-paint-brush"></i> Aparência</button>
         <button class="nav-btn" data-aba="editor"><i class="fas fa-magic"></i> Editor Visual</button>
+        <button class="nav-btn" data-aba="planilha"><i class="fas fa-table"></i> Planilhas</button>
       </nav>
       <div class="sidebar-footer">
         <a href="index.html" target="_blank" class="ver-site-btn">
@@ -568,7 +569,218 @@
 
         </div>
       </div>
+<!-- PLANILHAS -->
+<div class="aba" id="aba-planilha" style="display:none">
 
+  <!-- HOME: lista de planilhas -->
+  <div id="planilhasHome">
+    <div class="admin-header">
+      <div><h1><i class="fas fa-table"></i> Planilhas</h1><p>Organize seus dados em tabelas</p></div>
+    </div>
+
+    <!-- Criar nova planilha -->
+    <div class="nova-planilha-form">
+      <div class="field">
+        <label>📋 Nome da Planilha</label>
+        <input type="text" id="novaPlanilhaNome" placeholder="Ex: Pagamentos de Clientes, Controle de Pedidos..."/>
+      </div>
+      <button class="btn-add" id="btnCriarPlanilha">
+        <i class="fas fa-plus"></i> Criar Planilha
+      </button>
+    </div>
+
+    <!-- Lista -->
+    <div class="planilhas-lista" id="planilhasLista">
+      <div class="loading-admin"><div class="spinner"></div><p>Carregando...</p></div>
+    </div>
+  </div>
+
+  <!-- TELA DA PLANILHA ABERTA -->
+  <div class="planilha-tela" id="planilhaTela">
+
+    <!-- Topbar -->
+    <div class="planilha-topbar">
+      <button class="btn-cancel" onclick="fecharPlanilha()" style="display:flex;align-items:center;gap:8px">
+        <i class="fas fa-arrow-left"></i> Voltar
+      </button>
+      <input type="text" class="planilha-nome-edit" id="planilhaNomeEdit" placeholder="Nome da planilha"/>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="tb-btn" onclick="exportarCSV()">
+          <i class="fas fa-file-csv"></i> <span>Exportar CSV</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="planilha-toolbar">
+      <button class="tb-btn primary" onclick="adicionarLinha()">
+        <i class="fas fa-plus"></i> <span>+ Linha</span>
+      </button>
+      <button class="tb-btn primary" onclick="adicionarColuna()">
+        <i class="fas fa-columns"></i> <span>+ Coluna</span>
+      </button>
+      <div class="planilha-toolbar-sep"></div>
+      <span style="font-size:12px;color:var(--text-muted)">
+        <i class="fas fa-info-circle"></i> Clique em <i class="fas fa-cog"></i> no cabeçalho para configurar a coluna
+      </span>
+
+      <!-- Busca -->
+      <div class="planilha-busca-wrap" style="margin-left:auto">
+        <div class="busca-wrap-inner">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" class="planilha-busca" id="planilhaBusca" placeholder="Buscar..."/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="planilha-table-wrap" id="planilhaTableWrap">
+      <div class="linha-vazia-msg">Carregando...</div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="planilha-statusbar" id="planilhaStatusBar"></div>
+
+  </div>
+
+  <!-- MODAL CONFIGURAR COLUNA -->
+  <div class="col-config-modal" id="colConfigModal">
+    <div class="col-config-box">
+      <div class="col-config-titulo">
+        <span><i class="fas fa-cog"></i> Configurar Coluna</span>
+        <button class="btn-x" id="btnFecharColConfig"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="col-config-grid">
+
+        <!-- Nome -->
+        <div class="field" style="margin:0">
+          <label>Nome da Coluna</label>
+          <input type="text" id="colConfigNome" placeholder="Ex: Valor, Cliente, Data..."/>
+        </div>
+
+        <!-- Largura -->
+        <div class="field" style="margin:0">
+          <label>Largura (px)</label>
+          <input type="number" id="colConfigLargura" value="140" min="80" max="500"/>
+        </div>
+
+        <!-- Tipo -->
+        <div class="field" style="margin:0">
+          <label>Tipo de dado</label>
+          <div class="col-tipo-opcoes">
+            <button class="col-tipo-btn selecionado" data-tipo="texto">
+              <i class="fas fa-font"></i> Texto
+            </button>
+            <button class="col-tipo-btn" data-tipo="numero">
+              <i class="fas fa-hashtag"></i> Número
+            </button>
+            <button class="col-tipo-btn" data-tipo="data">
+              <i class="fas fa-calendar"></i> Data
+            </button>
+            <button class="col-tipo-btn" data-tipo="formula">
+              <i class="fas fa-calculator"></i> Fórmula
+            </button>
+          </div>
+        </div>
+
+        <!-- Somar no total -->
+        <div class="field" style="margin:0">
+          <label class="check-label">
+            <input type="checkbox" id="colConfigSomarTotal"/>
+            <span class="check-box"></span>
+            Mostrar soma total na barra inferior
+          </label>
+        </div>
+
+        <!-- CONFIG FÓRMULA -->
+        <div class="formula-config" id="formulaConfig">
+
+          <div class="formula-doc">
+            <strong>📖 Como usar fórmulas:</strong><br/>
+            Escolha a operação e selecione as colunas (ou digite um valor fixo) para A e B.<br/>
+            <strong>Soma:</strong> A + B &nbsp;|&nbsp;
+            <strong>Subtração:</strong> A − B<br/>
+            <strong>Multiplicação:</strong> A × B &nbsp;|&nbsp;
+            <strong>Divisão:</strong> A ÷ B<br/>
+            <strong>Percentual:</strong> (A ÷ B) × 100<br/>
+            <strong>Acumulado:</strong> soma de A de todas as linhas acima + atual<br/><br/>
+            💡 <em>Exemplo: Coluna "Lucro" = Receita (A) − Custo (B)</em><br/>
+            💡 <em>Exemplo: Coluna "Desconto 10%" = Valor (A) × 0.1 (B fixo)</em>
+          </div>
+
+          <div>
+            <label>Operação</label>
+            <select id="fOperacao">
+              <option value="soma">➕ Soma (A + B)</option>
+              <option value="subtracao">➖ Subtração (A − B)</option>
+              <option value="multiplicacao">✖️ Multiplicação (A × B)</option>
+              <option value="divisao">➗ Divisão (A ÷ B)</option>
+              <option value="percentual">% Percentual (A ÷ B × 100)</option>
+              <option value="acumulado">📈 Acumulado (soma de A até esta linha)</option>
+            </select>
+          </div>
+
+          <!-- Valor A -->
+          <div>
+            <label>Valor A</label>
+            <label class="check-label" style="font-size:12px;padding:4px 0">
+              <input type="checkbox" id="fUseColA" checked onchange="toggleColunaOuConstante('A')"/>
+              <span class="check-box"></span>
+              Usar coluna
+            </label>
+            <div id="fColWrapA">
+              <select id="fColA"><option value="">— Selecione a coluna —</option></select>
+            </div>
+            <div id="fConstWrapA" style="display:none">
+              <input type="number" id="fConstA" placeholder="Valor fixo (ex: 0.1 para 10%)"/>
+            </div>
+          </div>
+
+          <!-- Valor B -->
+          <div>
+            <label>Valor B</label>
+            <label class="check-label" style="font-size:12px;padding:4px 0">
+              <input type="checkbox" id="fUseColB" checked onchange="toggleColunaOuConstante('B')"/>
+              <span class="check-box"></span>
+              Usar coluna
+            </label>
+            <div id="fColWrapB">
+              <select id="fColB"><option value="">— Selecione a coluna —</option></select>
+            </div>
+            <div id="fConstWrapB" style="display:none">
+              <input type="number" id="fConstB" placeholder="Valor fixo (ex: 2 para dividir por 2)"/>
+            </div>
+          </div>
+
+          <!-- Totalizar -->
+          <div>
+            <label class="check-label" style="font-size:12px">
+              <input type="checkbox" id="fTotalizar"/>
+              <span class="check-box"></span>
+              Mostrar soma total desta fórmula na tabela
+            </label>
+          </div>
+
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:space-between;margin-top:8px">
+        <button class="btn-del danger" id="btnDeletarColuna" style="
+          background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);
+          color:#f87171;padding:10px 18px;border-radius:var(--radius-sm);
+          cursor:pointer;font-family:inherit;font-size:13px;
+          display:flex;align-items:center;gap:8px;">
+          <i class="fas fa-trash"></i> Excluir Coluna
+        </button>
+        <button class="btn-save" id="btnSalvarColConfig">
+          <i class="fas fa-save"></i> Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
     </main>
   </div>
 
