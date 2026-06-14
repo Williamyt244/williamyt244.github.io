@@ -145,8 +145,6 @@ window.abrirPlanilha = async function(id) {
   }
 
   linhas = data || [];
-
-  // Garantir que todas as linhas têm ordem correta
   linhas.forEach((l, i) => { l.ordem = i + 1; });
 
   document.getElementById('planilhasHome').style.display = 'none';
@@ -185,15 +183,12 @@ window.moverLinha = async function(linhaId, direcao) {
   const novoIdx = direcao === 'cima' ? idx - 1 : idx + 1;
   if (novoIdx < 0 || novoIdx >= linhas.length) return;
 
-  // Trocar posições no array
   const temp = linhas[idx];
   linhas[idx] = linhas[novoIdx];
   linhas[novoIdx] = temp;
 
-  // Atualizar campo ordem
   linhas.forEach((l, i) => { l.ordem = i + 1; });
 
-  // Salvar no Supabase
   await Promise.all([
     supabase.from('planilha_linhas')
       .update({ ordem: linhas[idx].ordem })
@@ -207,14 +202,11 @@ window.moverLinha = async function(linhaId, direcao) {
 };
 
 // ==========================================
-// RENDERIZAR TABELA
+// OBTER LINHAS FILTRADAS E ORDENADAS
 // ==========================================
-function renderizarTabela() {
-  const wrap = document.getElementById('planilhaTableWrap');
-  if (!wrap) return;
-
-  // Aplicar busca (só quando não estiver ordenando por coluna)
+function obterLinhasVisiveis() {
   let linhasFiltradas = [...linhas];
+
   if (termoBusca) {
     linhasFiltradas = linhasFiltradas.filter(l =>
       Object.values(l.dados || {}).some(v =>
@@ -223,15 +215,10 @@ function renderizarTabela() {
     );
   }
 
-  // Aplicar ordenação por coluna (se ativa)
   if (ordemCol) {
     linhasFiltradas.sort((a, b) => {
-      let va = a.dados?.[ordemCol.colId] ?? '';
-      let vb = b.dados?.[ordemCol.colId] ?? '';
-
-      // Extrair número de valores monetários (ex: "R$: 31,00" → 31)
-      va = extrairNumero(va);
-      vb = extrairNumero(vb);
+      let va = extrairNumero(a.dados?.[ordemCol.colId] ?? '');
+      let vb = extrairNumero(b.dados?.[ordemCol.colId] ?? '');
 
       const na = parseFloat(String(va).replace(',', '.'));
       const nb = parseFloat(String(vb).replace(',', '.'));
@@ -241,7 +228,6 @@ function renderizarTabela() {
       if (numerico) {
         cmp = na - nb;
       } else {
-        // Ordenação de datas
         const da = new Date(va), db = new Date(vb);
         if (!isNaN(da) && !isNaN(db)) {
           cmp = da - db;
@@ -253,6 +239,106 @@ function renderizarTabela() {
     });
   }
 
+  return linhasFiltradas;
+}
+
+// ==========================================
+// CALCULAR TOTAL DE UMA COLUNA
+// ==========================================
+function calcularTotalColuna(col, linhasFiltradas) {
+  if (col.tipo === 'formula' && col.formula?.totalizar) {
+    const total = linhasFiltradas.reduce((acc, l, li) => {
+      const v = parseFloat(calcularFormulaCelula(col, l, li, linhasFiltradas));
+      return acc + (isNaN(v) ? 0 : v);
+    }, 0);
+    return total;
+  }
+  if (col.tipo === 'numero' && col.somarTotal) {
+    return linhasFiltradas.reduce((acc, l) => {
+      const v = parseFloat(l.dados?.[col.id] || 0);
+      return acc + (isNaN(v) ? 0 : v);
+    }, 0);
+  }
+  if (col.tipo === 'texto' && col.somarTotal) {
+    return linhasFiltradas.reduce((acc, l) => {
+      const raw = String(l.dados?.[col.id] || '');
+      const num = extrairNumero(raw);
+      const v = parseFloat(String(num).replace(',', '.'));
+      return acc + (isNaN(v) ? 0 : v);
+    }, 0);
+  }
+  return null;
+}
+
+// ==========================================
+// ATUALIZAR LINHA DE TOTAIS (sem re-renderizar tabela)
+// ==========================================
+function atualizarLinhaTotais(linhasFiltradas) {
+  const tbody = document.querySelector('#planilhaTable tbody');
+  if (!tbody) return;
+
+  // Remover linha de totais antiga se existir
+  const linhaAntigaTotais = tbody.querySelector('.linha-formula-total');
+  if (linhaAntigaTotais) linhaAntigaTotais.remove();
+
+  const temTotal = colunas.some(c =>
+    (c.tipo === 'formula' && c.formula?.totalizar) ||
+    (c.tipo === 'numero' && c.somarTotal) ||
+    (c.tipo === 'texto' && c.somarTotal)
+  );
+
+  if (!temTotal || !linhasFiltradas.length) return;
+
+  const mostrarBotoesMover = !ordemCol && !termoBusca;
+
+  const tr = document.createElement('tr');
+  tr.className = 'linha-formula-total';
+
+  // Célula #
+  const tdNum = document.createElement('td');
+  tdNum.className = 'td-num';
+  tdNum.innerHTML = `<span style="padding:0 10px;display:flex;align-items:center;justify-content:center;height:36px;font-size:11px;font-weight:700">Σ</span>`;
+  tr.appendChild(tdNum);
+
+  // Célula mover (vazia)
+  if (mostrarBotoesMover) {
+    const tdMover = document.createElement('td');
+    tdMover.style.cssText = 'border:1px solid var(--border);background:var(--dark-3)';
+    tr.appendChild(tdMover);
+  }
+
+  // Células das colunas
+  colunas.forEach(col => {
+    const td = document.createElement('td');
+    const total = calcularTotalColuna(col, linhasFiltradas);
+
+    if (total !== null) {
+      const negativo = total < 0;
+      const prefixo = col.tipo === 'texto' ? 'Total R$: ' : '';
+      td.innerHTML = `<div class="total-cell ${negativo ? 'negativo' : ''}">${prefixo}${formatarMoeda(total)}</div>`;
+    } else {
+      td.innerHTML = `<div class="total-label">—</div>`;
+    }
+    tr.appendChild(td);
+  });
+
+  // Célula deletar (vazia)
+  const tdDel = document.createElement('td');
+  tdDel.style.cssText = 'border:1px solid var(--border);background:var(--dark-3)';
+  tr.appendChild(tdDel);
+
+  tbody.appendChild(tr);
+}
+
+// ==========================================
+// RENDERIZAR TABELA COMPLETA
+// ==========================================
+function renderizarTabela() {
+  const wrap = document.getElementById('planilhaTableWrap');
+  if (!wrap) return;
+
+  const linhasFiltradas = obterLinhasVisiveis();
+
   if (!colunas.length) {
     wrap.innerHTML = `
       <div class="linha-vazia-msg">
@@ -263,21 +349,17 @@ function renderizarTabela() {
     return;
   }
 
-  // Verificar se tem coluna com soma total
-  const temTotal = colunas.some(c =>
-    (c.tipo === 'formula' && c.formula?.totalizar) ||
-    (c.tipo === 'numero' && c.somarTotal) ||
-    (c.tipo === 'texto' && c.somarTotal)
-  );
-
-  // Botões de mover só aparecem se não tiver filtro/ordenação ativa
   const mostrarBotoesMover = !ordemCol && !termoBusca;
 
   let html = `<table class="planilha-table" id="planilhaTable">
     <thead>
       <tr>
         <th class="th-num">#</th>
-        ${mostrarBotoesMover ? '<th style="width:64px;min-width:64px;background:var(--dark-3);border:1px solid var(--border);text-align:center"><span style="font-size:11px;color:var(--text-muted)">Mover</span></th>' : ''}
+        ${mostrarBotoesMover
+          ? `<th style="width:64px;min-width:64px;background:var(--dark-3);border:1px solid var(--border);text-align:center">
+               <span style="font-size:11px;color:var(--text-muted)">Mover</span>
+             </th>`
+          : ''}
         ${colunas.map((col, ci) => {
           const icone = iconeTipo(col.tipo);
           const sortAtivo = ordemCol?.colId === col.id;
@@ -338,7 +420,7 @@ function renderizarTabela() {
                      transition:all 0.2s;display:flex;align-items:center;justify-content:center"
               ${ehPrimeira ? 'disabled' : ''}
               title="Mover para cima"
-              onmouseover="if(!this.disabled)this.style.background='rgba(124,58,237,0.15)';if(!this.disabled)this.style.color='var(--primary-light)'"
+              onmouseover="if(!this.disabled){this.style.background='rgba(124,58,237,0.15)';this.style.color='var(--primary-light)'}"
               onmouseout="this.style.background='none';this.style.color='${ehPrimeira ? 'rgba(255,255,255,0.1)' : 'var(--text-muted)'}'">
               <i class="fas fa-chevron-up"></i>
             </button>
@@ -350,7 +432,7 @@ function renderizarTabela() {
                      transition:all 0.2s;display:flex;align-items:center;justify-content:center"
               ${ehUltima ? 'disabled' : ''}
               title="Mover para baixo"
-              onmouseover="if(!this.disabled)this.style.background='rgba(124,58,237,0.15)';if(!this.disabled)this.style.color='var(--primary-light)'"
+              onmouseover="if(!this.disabled){this.style.background='rgba(124,58,237,0.15)';this.style.color='var(--primary-light)'}"
               onmouseout="this.style.background='none';this.style.color='${ehUltima ? 'rgba(255,255,255,0.1)' : 'var(--text-muted)'}'">
               <i class="fas fa-chevron-down"></i>
             </button>
@@ -391,61 +473,11 @@ function renderizarTabela() {
     });
   }
 
-  // ── LINHA DE TOTAIS ──
-  if (temTotal && linhasFiltradas.length) {
-    const colspan_mover = mostrarBotoesMover ? '<td style="border:1px solid var(--border);background:var(--dark-3)"></td>' : '';
-    html += `<tr class="linha-formula-total">
-      <td class="td-num">
-        <span style="padding:0 10px;display:flex;align-items:center;justify-content:center;height:36px;font-size:11px;font-weight:700">Σ</span>
-      </td>
-      ${colspan_mover}
-      ${colunas.map(col => {
-        // Coluna fórmula com totalizar
-        if (col.tipo === 'formula' && col.formula?.totalizar) {
-          const total = linhasFiltradas.reduce((acc, l, li) => {
-            const v = parseFloat(calcularFormulaCelula(col, l, li, linhasFiltradas));
-            return acc + (isNaN(v) ? 0 : v);
-          }, 0);
-          return `<td>
-            <div class="total-cell ${total < 0 ? 'negativo' : ''}">
-              ${formatarMoeda(total)}
-            </div>
-          </td>`;
-        }
-        // Coluna número com somarTotal
-        if (col.tipo === 'numero' && col.somarTotal) {
-          const total = linhasFiltradas.reduce((acc, l) => {
-            const v = parseFloat(l.dados?.[col.id] || 0);
-            return acc + (isNaN(v) ? 0 : v);
-          }, 0);
-          return `<td>
-            <div class="total-cell">
-              ${formatarMoeda(total)}
-            </div>
-          </td>`;
-        }
-        // Coluna texto com somarTotal (valores monetários "R$: X,XX")
-        if (col.tipo === 'texto' && col.somarTotal) {
-          const total = linhasFiltradas.reduce((acc, l) => {
-            const raw = String(l.dados?.[col.id] || '');
-            const num = extrairNumero(raw);
-            const v = parseFloat(String(num).replace(',', '.'));
-            return acc + (isNaN(v) ? 0 : v);
-          }, 0);
-          return `<td>
-            <div class="total-cell ${total < 0 ? 'negativo' : ''}">
-              Total R$: ${formatarMoeda(total)}
-            </div>
-          </td>`;
-        }
-        return `<td><div class="total-label">—</div></td>`;
-      }).join('')}
-      <td style="border:1px solid var(--border);background:var(--dark-3)"></td>
-    </tr>`;
-  }
-
   html += `</tbody></table>`;
   wrap.innerHTML = html;
+
+  // Renderizar linha de totais após montar a tabela
+  atualizarLinhaTotais(linhasFiltradas);
   atualizarStatusBar(linhasFiltradas);
 }
 
@@ -454,7 +486,6 @@ function renderizarTabela() {
 // ==========================================
 function extrairNumero(str) {
   if (!str) return 0;
-  // Remove "R$:", "R$", espaços, pontos de milhar e troca vírgula por ponto
   const limpo = String(str)
     .replace(/R\$\s*:?\s*/gi, '')
     .replace(/Total\s*/gi, '')
@@ -564,7 +595,6 @@ window.abrirColConfig = function(ci) {
 };
 
 function popularSelectsColunas(ciAtual) {
-  // Incluir colunas numéricas E colunas de texto (que podem ter valores monetários)
   const colsValor = colunas.filter((c, i) =>
     i !== ciAtual && (c.tipo === 'numero' || c.tipo === 'texto')
   );
@@ -630,7 +660,6 @@ function setupColConfigModal() {
   if (busca) {
     busca.addEventListener('input', e => {
       termoBusca = e.target.value;
-      // Desativar ordenação ao buscar para não confundir
       if (termoBusca) ordemCol = null;
       renderizarTabela();
     });
@@ -694,12 +723,10 @@ function fecharColConfig() {
 // ORDENAR POR COLUNA
 // ==========================================
 window.ordenarPor = function(colId) {
-  // Desativar botões de mover quando ordenação está ativa
   if (ordemCol?.colId === colId) {
     if (ordemCol.direcao === 'asc') {
       ordemCol.direcao = 'desc';
     } else {
-      // Terceiro clique: desativar ordenação
       ordemCol = null;
     }
   } else {
@@ -740,7 +767,7 @@ window.adicionarLinha = async function() {
 };
 
 // ==========================================
-// ALTERAR CÉLULA
+// ALTERAR CÉLULA — atualiza totais em tempo real
 // ==========================================
 window.alterarCelula = async function(linhaId, colId, valor) {
   const linha = linhas.find(l => l.id === linhaId);
@@ -749,50 +776,45 @@ window.alterarCelula = async function(linhaId, colId, valor) {
   if (!linha.dados) linha.dados = {};
   linha.dados[colId] = valor;
 
-  await supabase
+  // Salvar no Supabase em background
+  supabase
     .from('planilha_linhas')
     .update({ dados: linha.dados })
-    .eq('id', linhaId);
-
-  // Atualizar células de fórmula sem re-renderizar tudo
-  const colsFormula = colunas.filter(c => c.tipo === 'formula');
-  if (!colsFormula.length) {
-    atualizarStatusBar([...linhas]);
-    return;
-  }
-
-  let linhasFiltradas = [...linhas];
-  if (ordemCol) {
-    linhasFiltradas.sort((a, b) => {
-      let va = extrairNumero(a.dados?.[ordemCol.colId] ?? '');
-      let vb = extrairNumero(b.dados?.[ordemCol.colId] ?? '');
-      const na = parseFloat(String(va).replace(',', '.'));
-      const nb = parseFloat(String(vb).replace(',', '.'));
-      const cmp = !isNaN(na) && !isNaN(nb)
-        ? na - nb
-        : String(va).localeCompare(String(vb), 'pt-BR');
-      return ordemCol.direcao === 'asc' ? cmp : -cmp;
+    .eq('id', linhaId)
+    .then(({ error }) => {
+      if (error) console.error('Erro ao salvar célula:', error);
     });
-  }
 
-  linhasFiltradas.forEach((l, li) => {
-    const tr = document.querySelector(`tr[data-id="${l.id}"]`);
-    if (!tr) return;
-    const formulaInputs = [...tr.querySelectorAll('input[data-tipo="formula"]')];
-    const formulaCols = colunas
-      .map((c, i) => ({ c, i }))
-      .filter(({ c }) => c.tipo === 'formula');
+  // Obter linhas visíveis atualizadas
+  const linhasFiltradas = obterLinhasVisiveis();
 
-    formulaCols.forEach(({ c }, fIdx) => {
-      const resultado = calcularFormulaCelula(c, l, li, linhasFiltradas);
-      if (formulaInputs[fIdx]) {
-        formulaInputs[fIdx].value = formatarValor(resultado, c);
-        const negativo = parseFloat(resultado) < 0;
-        formulaInputs[fIdx].className = `cell-input${negativo ? ' negativo' : ''}`;
-      }
+  // Atualizar células de fórmula da tabela existente
+  const colsFormula = colunas.filter(c => c.tipo === 'formula');
+  colsFormula.forEach(col => {
+    linhasFiltradas.forEach((l, li) => {
+      const tr = document.querySelector(`tr[data-id="${l.id}"]`);
+      if (!tr) return;
+
+      const formulaCols = colunas
+        .map((c, i) => ({ c, i }))
+        .filter(({ c }) => c.tipo === 'formula');
+
+      const formulaInputs = [...tr.querySelectorAll('input[data-tipo="formula"]')];
+
+      formulaCols.forEach(({ c }, fIdx) => {
+        if (c.id !== col.id) return;
+        const resultado = calcularFormulaCelula(c, l, li, linhasFiltradas);
+        if (formulaInputs[fIdx]) {
+          formulaInputs[fIdx].value = formatarValor(resultado, c);
+          const negativo = parseFloat(resultado) < 0;
+          formulaInputs[fIdx].className = `cell-input${negativo ? ' negativo' : ''}`;
+        }
+      });
     });
   });
 
+  // Atualizar linha de totais e status bar em tempo real
+  atualizarLinhaTotais(linhasFiltradas);
   atualizarStatusBar(linhasFiltradas);
 };
 
@@ -809,8 +831,6 @@ window.deletarLinha = async function(linhaId) {
   if (error) { notifP('❌ Erro ao deletar!', 'erro'); return; }
 
   linhas = linhas.filter(l => l.id !== linhaId);
-
-  // Reordenar após deletar
   linhas.forEach((l, i) => { l.ordem = i + 1; });
 
   renderizarTabela();
@@ -866,20 +886,8 @@ function atualizarStatusBar(linhasFiltradas) {
   const somas = colunas
     .filter(c => c.somarTotal)
     .map(c => {
-      let total = 0;
-      if (c.tipo === 'numero') {
-        total = linhasFiltradas.reduce((acc, l) => {
-          const v = parseFloat(l.dados?.[c.id] || 0);
-          return acc + (isNaN(v) ? 0 : v);
-        }, 0);
-      } else if (c.tipo === 'texto') {
-        total = linhasFiltradas.reduce((acc, l) => {
-          const raw = String(l.dados?.[c.id] || '');
-          const num = extrairNumero(raw);
-          const v = parseFloat(String(num).replace(',', '.'));
-          return acc + (isNaN(v) ? 0 : v);
-        }, 0);
-      }
+      const total = calcularTotalColuna(c, linhasFiltradas);
+      if (total === null) return '';
       return `<span class="statusbar-item">
         Σ ${escaparHTML(c.nome)}: <strong>R$ ${formatarMoeda(total)}</strong>
       </span>`;
@@ -887,7 +895,7 @@ function atualizarStatusBar(linhasFiltradas) {
 
   const ordemInfo = ordemCol
     ? `<span class="statusbar-item" style="color:var(--primary-light)">
-        <i class="fas fa-sort"></i> Ordenado por coluna
+        <i class="fas fa-sort"></i> Ordenado
         (clique 3x para remover)
       </span>`
     : '';
