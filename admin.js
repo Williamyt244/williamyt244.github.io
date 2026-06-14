@@ -334,8 +334,11 @@ async function carregarTextosAdmin() {
   setValue('tNomeSite', data.nomesite || '');
   setValue('tHeroBadge', data.hero_badge || '');
   setValue('tHeroBadgeOffline', data.hero_badge_offline || '');
-const offlineCheck = document.getElementById('tHeroOffline');
-if (offlineCheck) offlineCheck.checked = data.hero_offline || false;
+
+  // Checkbox offline
+  const offlineCheck = document.getElementById('tHeroOffline');
+  if (offlineCheck) offlineCheck.checked = data.hero_offline || false;
+
   setValue('tHeroTitulo', data.hero_titulo || '');
   setValue('tHeroDestaque', data.hero_titulo_destaque || '');
   setValue('tHeroSub', data.hero_subtitulo || '');
@@ -398,6 +401,8 @@ function setupSalvarTextos() {
       const { error } = await supabase.from('site_config').update({
         nomesite: getValue('tNomeSite'),
         hero_badge: getValue('tHeroBadge'),
+        hero_badge_offline: getValue('tHeroBadgeOffline'),
+        hero_offline: document.getElementById('tHeroOffline')?.checked || false,
         hero_titulo: getValue('tHeroTitulo'),
         hero_titulo_destaque: getValue('tHeroDestaque'),
         hero_subtitulo: getValue('tHeroSub'),
@@ -591,7 +596,7 @@ function setupBotoesServicos() {
 }
 
 // ==========================================
-// PREÇOS - ATUALIZADO
+// PREÇOS
 // ==========================================
 async function carregarPrecosAdmin() {
   const { data } = await supabase.from('precos').select('*').order('ordem');
