@@ -1,6 +1,6 @@
-import { inicializarPlanilha } from './planilha.js';
 import { supabase } from './supabase-config.js';
 import { inicializarEditor } from './editor.js';
+import { inicializarPlanilha } from './planilha.js';
 
 // ==========================================
 // ESTADO GLOBAL
@@ -95,15 +95,23 @@ function inicializarAdmin() {
 // ==========================================
 function setupAbas() {
   let editorIniciado = false;
+  let planilhaIniciada = false;
+
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.querySelectorAll('.aba').forEach(a => a.style.display = 'none');
       document.getElementById(`aba-${btn.dataset.aba}`).style.display = 'block';
+
       if (btn.dataset.aba === 'editor' && !editorIniciado) {
         editorIniciado = true;
         inicializarEditor();
+      }
+
+      if (btn.dataset.aba === 'planilha' && !planilhaIniciada) {
+        planilhaIniciada = true;
+        inicializarPlanilha();
       }
     });
   });
@@ -336,7 +344,6 @@ async function carregarTextosAdmin() {
   setValue('tHeroBadge', data.hero_badge || '');
   setValue('tHeroBadgeOffline', data.hero_badge_offline || '');
 
-  // Checkbox offline
   const offlineCheck = document.getElementById('tHeroOffline');
   if (offlineCheck) offlineCheck.checked = data.hero_offline || false;
 
@@ -691,14 +698,18 @@ window.atualizarCorPreco = function(i) {
   precosLista[i].cor = gradiente;
   const preview = document.getElementById(`corPreview-${i}`);
   if (preview) preview.style.background = gradiente;
-  const iconBox = document.querySelector(`.preco-edit-item-novo:nth-child(${i + 1}) .preco-icon-preview`);
+  const iconBox = document.querySelector(
+    `.preco-edit-item-novo:nth-child(${i + 1}) .preco-icon-preview`
+  );
   if (iconBox) iconBox.style.background = gradiente;
 };
 
 window.atualizarPreviewPreco = function(i) {
   const iconEl = document.getElementById(`iconPreview-${i}`);
   if (iconEl) iconEl.innerHTML = `<i class="${precosLista[i].icone || 'fas fa-star'}"></i>`;
-  const nomeEl = document.querySelector(`.preco-edit-item-novo:nth-child(${i + 1}) .preco-edit-preview span`);
+  const nomeEl = document.querySelector(
+    `.preco-edit-item-novo:nth-child(${i + 1}) .preco-edit-preview span`
+  );
   if (nomeEl) nomeEl.textContent = precosLista[i].nome || 'Sem nome';
 };
 
